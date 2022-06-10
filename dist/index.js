@@ -35,7 +35,7 @@ var import_cluster2 = __toESM(require("cluster"));
 
 // src/master.ts
 var import_cluster = __toESM(require("cluster"));
-var import_os = __toESM(require("os"));
+var os = __toESM(require("os"));
 
 // src/worker.ts
 var Worker = class {
@@ -67,8 +67,8 @@ var Worker = class {
 };
 
 // src/master.ts
-var cpus = import_os.default.cpus();
-var numWorkers = cpus.length;
+var cpus2 = os.cpus();
+var numWorkers = cpus2.length;
 var Master = class {
   constructor(process, onMessage, onWorkerMessage) {
     this.process = process;
@@ -124,7 +124,7 @@ var Master = class {
 
 // src/index.ts
 function startCluster(onMasterStart, onMasterMessage, onWorkerStart, onWorkerMessage) {
-  if (import_cluster2.default.isMaster) {
+  if (import_cluster2.default.isPrimary) {
     const master = new Master(import_cluster2.default, onMasterMessage, onWorkerMessage);
     onMasterStart(master);
   } else {

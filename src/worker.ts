@@ -1,6 +1,6 @@
-import cluster from 'cluster';
-
 type Process = typeof cluster.worker;
+
+import cluster from 'cluster';
 
 export class Worker {
   process: Process;
@@ -8,7 +8,7 @@ export class Worker {
   /**
    *
    */
-  constructor(worker, onMessage) {
+  constructor(worker: Process, onMessage: (message: any) => void) {
     this.process = worker;
 
     this.process.on('message', (message) => {

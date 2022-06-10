@@ -8,10 +8,10 @@ const commands: {
 } = {};
 
 export class Command {
-  from: number;
-  to: number | 'all';
   command: string;
   args: CommandArguments;
+  from: number;
+  to: number | 'all';
 
   /**
    *
@@ -24,14 +24,24 @@ export class Command {
    *
    */
   constructor(
-    from: number,
-    to: number | 'all',
     command: string,
-    args: CommandArguments
+    args: CommandArguments,
+    from: number,
+    to: number | 'all'
   ) {
-    this.from = from;
-    this.to = to;
+    if (commands[command] === undefined) {
+      throw new RangeError(`"${command}" has not been regsitered.`);
+    }
     this.command = command;
     this.args = args;
+    this.from = from;
+    this.to = to;
+  }
+
+  /**
+   *
+   */
+  run() {
+    return commands[this.command](this.args);
   }
 }

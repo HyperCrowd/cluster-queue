@@ -14,7 +14,11 @@ export class Master {
   /**
    *
    */
-  constructor(process: Process, onMessage, onWorkerMessage) {
+  constructor(
+    process: Process,
+    onMessage: (worker: typeof cluster.worker, message: any) => void,
+    onWorkerMessage: (message: any) => void
+  ) {
     this.process = process;
     this.workers = [];
 
