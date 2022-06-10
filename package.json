@@ -1,6 +1,6 @@
 {
   "name": "@psysecgroup/cluster-queue",
-  "description": "Runs Master and Worker cluster with commands for workers to get new commands from the master",
+  "description": "Easily sets up primary and worker clustering, allowing primary to contain pending jobs and for workers to grab them off the queue the moment they are availible.",
   "version": "1.0.0",
   "author": "The PsySec Group",
   "license": "MIT",
@@ -20,9 +20,7 @@
     "watch": "tsup-node --watch --onSuccess 'node --enable-source-maps dist/index.js'"
   },
   "tsup": {
-    "entry": [
-      "src/index.ts"
-    ],
+    "entry": ["src/index.ts"],
     "splitting": false,
     "sourcemap": true,
     "clean": true,
@@ -31,9 +29,7 @@
   "main": "./dist/index.js",
   "module": "./dist/esm/index.js",
   "types": "./dist/index.d.ts",
-  "files": [
-    "/dist"
-  ],
+  "files": ["/dist"],
   "devDependencies": {
     "@types/node": "^17.0.41",
     "nodemon": "^2.0.16",
