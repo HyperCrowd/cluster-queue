@@ -1,0 +1,43 @@
+{
+  "name": "@psysecgroup/cluster-queue",
+  "description": "Runs Master and Worker cluster with commands for workers to get new commands from the master",
+  "version": "1.0.0",
+  "author": "The PsySec Group",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/PsySecGroup/cluster-queue/issues"
+  },
+  "homepage": "https://github.com/PsySecGroup/cluster-queue#readme",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/PsySecGroup/cluster-queue.git"
+  },
+  "scripts": {
+    "start": "echo 'Ready to develop!'",
+    "dev": "echo 'Installation complete!'",
+    "build": "tsup-node --legacy-output --minify --format esm,cjs,iife",
+    "sb-watch": "nodemon --watch src/ -e ts,tsx,js --exec \"tsup-node --onSuccess 'node --enable-source-maps dist/index.js'\"",
+    "watch": "tsup-node --watch --onSuccess 'node --enable-source-maps dist/index.js'"
+  },
+  "tsup": {
+    "entry": [
+      "src/index.ts"
+    ],
+    "splitting": false,
+    "sourcemap": true,
+    "clean": true,
+    "dts": true
+  },
+  "main": "./dist/index.js",
+  "module": "./dist/esm/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "/dist"
+  ],
+  "devDependencies": {
+    "@types/node": "^17.0.41",
+    "nodemon": "^2.0.16",
+    "tsup": "^6.1.0",
+    "typescript": "^4.7.3"
+  }
+}
