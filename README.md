@@ -4,7 +4,7 @@ Easily sets up primary and worker clustering, allowing primary to contain pendin
 
 ## Demo
 
-![~[Try on StackBlitz](docs/try.png)](https://stackblitz.com/edit/psysecgroup-cluster-queue)
+[![Try on StackBlitz](/docs/try.png)](https://stackblitz.com/edit/psysecgroup-cluster-queue)
 
 ## Install
 
