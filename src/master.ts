@@ -15,7 +15,7 @@ export class Master {
   workers: Worker[] = [];
   priamryQueue: Queue;
   workerQueue: Queue;
-  showLogging: boolean;
+  useLogging: boolean;
   cli: Cli;
 
   constructor(
@@ -25,11 +25,11 @@ export class Master {
     workerQueue: Queue,
     onMessage: (worker: typeof cluster.worker, command: Command) => void,
     onWorkerMessage: (message: any) => void,
-    showLogging: boolean = false
+    useLogging: boolean = false
   ) {
     this.cli = cli;
     this.process = process;
-    this.showLogging = showLogging;
+    this.useLogging = useLogging;
     this.priamryQueue = priamryQueue;
     this.workerQueue = workerQueue;
 
@@ -53,7 +53,7 @@ export class Master {
 
     process.on('exit', (worker, code, signal) => {
       // When a worker quits
-      if (this.showLogging) {
+      if (this.useLogging) {
         console.info(
           'Worker ' +
             worker.process.pid +
@@ -69,7 +69,7 @@ export class Master {
 
     process.on('online', (worker) => {
       // When a worker spawns
-      if (this.showLogging) {
+      if (this.useLogging) {
         console.info('Worker ' + worker.process.pid + ' is online');
       }
 
@@ -77,7 +77,7 @@ export class Master {
       this.workers.push(newWorker);
     });
 
-    if (this.showLogging) {
+    if (this.useLogging) {
       console.info('Master cluster setting up ' + numWorkers + ' workers...');
     }
 
@@ -141,7 +141,7 @@ export class Master {
         command.to === 'workers' ||
         (worker.process !== undefined && worker.process.pid === command.to)
       ) {
-        if (this.showLogging) {
+        if (this.useLogging) {
           console.info(`[MASTER -> PID ${worker.process.pid}]`, command);
         }
 

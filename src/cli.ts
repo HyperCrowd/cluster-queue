@@ -10,10 +10,14 @@ export class Cli {
   queue: Queue;
   program: Commander;
 
-  constructor(queue: Queue) {
+  constructor(queue: Queue, definitions: CliDefinition[]) {
     this.queue = queue;
     this.program = new Commander();
     this.program.name(name).description(description).version(version);
+
+    for (const definition of definitions) {
+      this.register(definition);
+    }
   }
 
   register(definition: CliDefinition) {
@@ -21,28 +25,42 @@ export class Cli {
       return;
     }
 
-    this.program
-      .command(definition.command)
+    const isCliCommand = definition.command.indexOf('cli:') === 0;
+
+    const commandName = isCliCommand
+      ? definition.command.substring(3)
+      : definition.command;
+
+    // Register the definition as a command
+    Command.register(commandName, definition.action);
+
+    if (!isCliCommand) {
+      return;
+    }
+
+    // Register the command
+    const newCommand = this.program
+      .command(commandName)
       .description(definition.description);
 
+    // Define the end-of-line arguments
     const argKeys = Object.keys(definition.args);
 
     for (const arg of argKeys) {
       const description = definition.args[arg];
 
-      this.program.argument(arg, description);
+      newCommand.argument(arg, description);
     }
 
+    // Define the flags/options
     for (const option of Object.keys(definition.options)) {
       const description = definition.options[option];
 
-      this.program.option(option, description);
+      newCommand.option(option, description);
     }
 
-    Command.register(definition.command, definition.action);
-
     // program.action(definition.action);
-    this.program.action((...args: string[] & [(KeyPair | string)?]) => {
+    newCommand.action((...args: string[] & [(KeyPair | string)?]) => {
       const options =
         typeof args[args.length - 1] === 'string'
           ? {}
@@ -62,6 +80,9 @@ export class Cli {
     });
   }
 
+  /**
+   *
+   */
   start() {
     this.program.parse(process.argv);
   }
