@@ -85,7 +85,7 @@ var require_package = __commonJS({
 // src/index.ts
 var src_exports = {};
 __export(src_exports, {
-  startCluster: () => startCluster
+  Cluster: () => Cluster
 });
 var import_cluster4 = __toESM(require("cluster"));
 
@@ -254,7 +254,6 @@ var Master = class {
     for (var i = 0; i < numWorkers; i++) {
       this.spawnWorker();
     }
-    console.log("why");
   }
   spawnWorker() {
     let worker = this.process.fork();
@@ -324,46 +323,56 @@ var Queue = class {
 };
 
 // src/index.ts
-async function startCluster(commands2, onMasterStart, onMasterMessage, onWorkerStart, onWorkerMessage, useLogging = false) {
-  if (import_cluster4.default.isPrimary) {
-    const primaryQueue = new Queue(import_cluster4.default);
-    const workerQueue = new Queue(import_cluster4.default);
-    const cli = new Cli(primaryQueue, commands2);
-    const master = new Master(import_cluster4.default, cli, primaryQueue, workerQueue, onMasterMessage, onWorkerMessage, useLogging);
-    cli.start();
-    await master.start();
-    await onMasterStart(master);
-  } else {
-    const worker = import_cluster4.default.worker;
-    await onWorkerStart(worker);
+var Cluster = class {
+  constructor(commands2, useLogging = false) {
+    this.commands = commands2;
+    this.useLogging = useLogging;
+    return this;
   }
-}
-startCluster([
-  {
-    command: "cli:test",
-    description: "Test",
-    args: {
-      "<test>": "A fun test",
-      "<pee>": "no"
+  onMessage(onPrimaryMessage, onWorkerMessage) {
+    this.onPrimaryMessage = onPrimaryMessage;
+    this.onWorkerMessage = onWorkerMessage;
+    return this;
+  }
+  async start(onPrimaryStart, onWorkerStart) {
+    if (import_cluster4.default.isPrimary) {
+      const primaryQueue = new Queue(import_cluster4.default);
+      const workerQueue = new Queue(import_cluster4.default);
+      const cli = new Cli(primaryQueue, this.commands);
+      const primary = new Master(import_cluster4.default, cli, primaryQueue, workerQueue, this.onPrimaryMessage, this.onWorkerMessage, this.useLogging);
+      cli.start();
+      await primary.start();
+      await onPrimaryStart(primary);
+    } else {
+      await onWorkerStart(import_cluster4.default.worker);
+    }
+  }
+};
+(async function main() {
+  const instance = new Cluster([
+    {
+      command: "cli:test",
+      description: "Test",
+      args: {
+        "<test>": "A fun test",
+        "<pee>": "no"
+      },
+      options: {},
+      action: (args, state, command) => {
+        state[command.command] = command.args;
+      }
     },
-    options: {},
-    action: (args, state, command) => {
-      state[command.command] = command.args;
+    {
+      command: "doThing",
+      action: (command) => {
+      }
     }
-  },
-  {
-    command: "doThing",
-    action: (command) => {
-    }
-  }
-], () => {
-}, () => {
-}, () => {
-}, () => {
-}, true);
+  ], true).onMessage(() => void 0, () => void 0);
+  await instance.start(() => void 0, () => void 0);
+})();
 module.exports = __toCommonJS(src_exports);
 // Annotate the CommonJS export names for ESM import in node:
 0 && (module.exports = {
-  startCluster
+  Cluster
 });
 //# sourceMappingURL=index.js.map
