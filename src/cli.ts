@@ -6,6 +6,8 @@ import { Command } from './command';
 
 const { name, description, version } = require('../package.json');
 
+const removeChars = /[^A-Za-z0-9_]/g;
+
 export class Cli {
   queue: Queue;
   program: Commander;
@@ -32,7 +34,7 @@ export class Cli {
       : definition.command;
 
     // Register the definition as a command
-    Command.register(commandName, definition.action);
+    Command.register(definition.command, definition.action);
 
     if (!isCliCommand) {
       return;
@@ -63,15 +65,15 @@ export class Cli {
     // program.action(definition.action);
     newCommand.action((...args: string[] & [(KeyPair | string)?]) => {
       const options =
-        typeof args[args.length - 1] === 'string'
+        typeof args[args.length - 2] === 'string'
           ? {}
-          : (args[args.length - 1] as KeyPair);
+          : (args[args.length - 2] as KeyPair);
 
       options.cli = {};
 
       let i = 0;
       for (const key of argKeys) {
-        options.cli[key] = args[i];
+        options.cli[key.replace(removeChars, '')] = args[i];
         i += 1;
       }
 

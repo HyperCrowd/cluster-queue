@@ -41,7 +41,10 @@ startCluster(
     {
       command: 'cli:test',
       description: 'Test',
-      args: {},
+      args: {
+        '<test>': 'A fun test',
+        '<pee>': 'no',
+      },
       options: {},
       action: (command: Command) => {
         console.log(command);
@@ -52,9 +55,13 @@ startCluster(
       action: (command: Command) => {},
     },
   ],
+  // onMasterStart
   () => {},
+  // onMasterMessage
   () => {},
+  // onWorkerStart
   () => {},
+  // onWorkerMessage
   () => {},
   true
 );

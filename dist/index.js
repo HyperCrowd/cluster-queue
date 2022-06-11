@@ -47,16 +47,14 @@ var require_package = __commonJS({
         url: "git+https://github.com/PsySecGroup/cluster-queue.git"
       },
       scripts: {
-        start: "npm run dev",
+        start: "node -r source-map-support/register dist/index.js",
         dev: `echo 'Type "npm run sb-watch" to get started'`,
         build: "tsup-node --legacy-output --minify --format esm,cjs,iife",
-        "sb-watch": `nodemon --watch src/ -e ts,tsx,js --exec "tsup-node --onSuccess 'node --enable-source-maps dist/index.js'"`,
-        watch: "tsup-node --watch --onSuccess 'node --enable-source-maps dist/index.js'"
+        "sb-watch": `nodemon --watch src/ -e ts,tsx,js --exec "tsup-node --onSuccess 'node -r source-map-support/register dist/index.js test wee games'"`,
+        watch: "tsup-node --watch --onSuccess 'node -r source-map-support/register dist/index.js'"
       },
       tsup: {
-        entry: [
-          "src/index.ts"
-        ],
+        entry: ["src/index.ts"],
         splitting: false,
         sourcemap: true,
         clean: true,
@@ -65,12 +63,11 @@ var require_package = __commonJS({
       main: "./dist/index.js",
       module: "./dist/esm/index.js",
       types: "./dist/index.d.ts",
-      files: [
-        "/dist"
-      ],
+      files: ["/dist"],
       devDependencies: {
         "@types/node": "^17.0.41",
         nodemon: "^2.0.16",
+        "source-map-support": "^0.5.21",
         tsup: "^6.1.0",
         typescript: "^4.7.3"
       },
@@ -100,7 +97,7 @@ var Command = class {
   }
   constructor(command, args, from, to) {
     if (commands[command] === void 0) {
-      throw new RangeError(`"${command}" has not been regsitered.`);
+      throw new RangeError(`"${command}" has not been registered.`);
     }
     this.command = command;
     this.args = args;
@@ -117,6 +114,7 @@ var Command = class {
 
 // src/cli.ts
 var { name, description, version } = require_package();
+var removeChars = /[^A-Za-z0-9_]/g;
 var Cli = class {
   constructor(queue, definitions) {
     this.queue = queue;
@@ -132,7 +130,7 @@ var Cli = class {
     }
     const isCliCommand = definition.command.indexOf("cli:") === 0;
     const commandName = isCliCommand ? definition.command.substring(4) : definition.command;
-    Command.register(commandName, definition.action);
+    Command.register(definition.command, definition.action);
     if (!isCliCommand) {
       return;
     }
@@ -148,11 +146,11 @@ var Cli = class {
       newCommand.option(option, description2);
     }
     newCommand.action((...args) => {
-      const options = typeof args[args.length - 1] === "string" ? {} : args[args.length - 1];
+      const options = typeof args[args.length - 2] === "string" ? {} : args[args.length - 2];
       options.cli = {};
       let i = 0;
       for (const key of argKeys) {
-        options.cli[key] = args[i];
+        options.cli[key.replace(removeChars, "")] = args[i];
         i += 1;
       }
       this.queue.add(new Command(definition.command, options, "cli", "primary"));
@@ -294,11 +292,14 @@ var Queue = class {
     return this.queue.shift();
   }
   next(worker) {
+    console.log("this.queue", this.queue);
     const command = this.queue.shift();
+    console.log("this.queue.shift()", command);
     if (command === void 0) {
       return;
     }
     const newCommand = command.clone("primary", worker.process.pid);
+    console.log("newCommand", newCommand);
     if (worker) {
       worker.send(newCommand);
     }
@@ -324,7 +325,10 @@ startCluster([
   {
     command: "cli:test",
     description: "Test",
-    args: {},
+    args: {
+      "<test>": "A fun test",
+      "<pee>": "no"
+    },
     options: {},
     action: (command) => {
       console.log(command);

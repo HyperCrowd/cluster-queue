@@ -20,6 +20,7 @@ export class Queue {
    */
   add(command: Command) {
     const index = this.queue.push(command);
+    console.log(this.queue);
     this.primary.emit('newCommand', command.to);
     return index;
   }
@@ -35,14 +36,15 @@ export class Queue {
    *
    */
   next(worker?: Worker): Command | undefined {
+    console.log('this.queue', this.queue);
     const command = this.queue.shift();
-
+    console.log('this.queue.shift()', command);
     if (command === undefined) {
       return;
     }
 
     const newCommand = command.clone('primary', worker.process.pid);
-
+    console.log('newCommand', newCommand);
     if (worker) {
       worker.send(newCommand);
     }

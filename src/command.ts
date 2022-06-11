@@ -25,8 +25,9 @@ export class Command implements iCommand {
     to: number | 'workers' | 'primary'
   ) {
     if (commands[command] === undefined) {
-      throw new RangeError(`"${command}" has not been regsitered.`);
+      throw new RangeError(`"${command}" has not been registered.`);
     }
+
     this.command = command;
     this.args = args;
     this.from = from;

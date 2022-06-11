@@ -10,8 +10,6 @@ Easily sets up primary and worker clustering, allowing primary to contain pendin
 
 ## CLI
 
-Source map support is currently experimental
-
 ### npm
 
 - `npm run build`: Builds the source TypeScript to CommonJS, ESM, and IIFE JavaScript files in [`dist`](dist)
