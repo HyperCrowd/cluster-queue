@@ -10,7 +10,7 @@ export class Worker {
 
     this.process.on('message', async (message) => {
       if (this.process.process !== undefined) {
-        console.info(`[MASTER -> PID ${this.process.process.pid}]`, message);
+        console.info(`[PRIMARY -> PID ${this.process.process.pid}]`, message);
         await onMessage(message);
       }
     });
@@ -41,7 +41,7 @@ export class Worker {
    * Sends a message from the worker to the primary
    */
   send(message) {
-    console.info(`[PID ${this.process.process.pid} -> MASTER]`, message);
+    console.info(`[PID ${this.process.process.pid} -> PRIMARY]`, message);
     this.process.process.send(message);
   }
 }

@@ -2,7 +2,7 @@ import type { CliDefinition, KeyPair } from './index.d';
 import cluster from 'cluster';
 import { Cli } from './cli';
 import { Command } from './command';
-import { Master } from './master';
+import { Primary } from './primary';
 import { Queue } from './queue';
 
 export class Cluster {
@@ -39,14 +39,14 @@ export class Cluster {
    *
    */
   async start(
-    onPrimaryStart: (master: Master) => Promise<void>,
+    onPrimaryStart: (primary: Primary) => Promise<void>,
     onWorkerStart: (worker: typeof cluster.worker) => Promise<void>
   ) {
     if (cluster.isPrimary) {
       const primaryQueue = new Queue(cluster);
       const workerQueue = new Queue(cluster);
       const cli = new Cli(primaryQueue, this.commands);
-      const primary = new Master(
+      const primary = new Primary(
         cluster,
         cli,
         primaryQueue,

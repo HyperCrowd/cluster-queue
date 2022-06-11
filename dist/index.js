@@ -165,7 +165,7 @@ var Cli = class {
   }
 };
 
-// src/master.ts
+// src/primary.ts
 var import_cluster2 = __toESM(require("cluster"));
 var os = __toESM(require("os"));
 
@@ -175,7 +175,7 @@ var Worker = class {
     this.process = worker;
     this.process.on("message", async (message) => {
       if (this.process.process !== void 0) {
-        console.info(`[MASTER -> PID ${this.process.process.pid}]`, message);
+        console.info(`[PRIMARY -> PID ${this.process.process.pid}]`, message);
         await onMessage(message);
       }
     });
@@ -193,15 +193,15 @@ var Worker = class {
     this.process = void 0;
   }
   send(message) {
-    console.info(`[PID ${this.process.process.pid} -> MASTER]`, message);
+    console.info(`[PID ${this.process.process.pid} -> PRIMARY]`, message);
     this.process.process.send(message);
   }
 };
 
-// src/master.ts
+// src/primary.ts
 var cpus2 = os.cpus();
 var numWorkers = cpus2.length;
-var Master = class {
+var Primary = class {
   constructor(process2, cli, primaryQueue, workerQueue, onMessage, onWorkerMessage, useLogging = false) {
     this.workers = [];
     this.state = {};
@@ -249,7 +249,7 @@ var Master = class {
       })
     ]);
     if (this.useLogging) {
-      console.info("Master cluster setting up " + numWorkers + " workers...");
+      console.info("Primary cluster setting up " + numWorkers + " workers...");
     }
     for (var i = 0; i < numWorkers; i++) {
       this.spawnWorker();
@@ -285,7 +285,7 @@ var Master = class {
     for (const worker of workers) {
       if (command.to === "workers" || worker.process !== void 0 && worker.process.pid === command.to) {
         if (this.useLogging) {
-          console.info(`[MASTER -> PID ${worker.process.pid}]`, command);
+          console.info(`[PRIMARY -> PID ${worker.process.pid}]`, command);
         }
         worker.process.send(command);
       }
@@ -339,7 +339,7 @@ var Cluster = class {
       const primaryQueue = new Queue(import_cluster4.default);
       const workerQueue = new Queue(import_cluster4.default);
       const cli = new Cli(primaryQueue, this.commands);
-      const primary = new Master(import_cluster4.default, cli, primaryQueue, workerQueue, this.onPrimaryMessage, this.onWorkerMessage, this.useLogging);
+      const primary = new Primary(import_cluster4.default, cli, primaryQueue, workerQueue, this.onPrimaryMessage, this.onWorkerMessage, this.useLogging);
       cli.start();
       await primary.start();
       await onPrimaryStart(primary);

@@ -11,7 +11,7 @@ import { Worker } from './worker';
 const cpus = os.cpus();
 const numWorkers = cpus.length;
 
-export class Master {
+export class Primary {
   process: Process;
   workers: Worker[] = [];
   primaryQueue: Queue;
@@ -84,7 +84,7 @@ export class Master {
   }
 
   /**
-   * Starts the master process
+   * Starts the priamry process
    */
   async start() {
     await Promise.all([
@@ -98,7 +98,7 @@ export class Master {
     ]);
 
     if (this.useLogging) {
-      console.info('Master cluster setting up ' + numWorkers + ' workers...');
+      console.info('Primary cluster setting up ' + numWorkers + ' workers...');
     }
 
     for (var i = 0; i < numWorkers; i++) {
@@ -162,7 +162,7 @@ export class Master {
         (worker.process !== undefined && worker.process.pid === command.to)
       ) {
         if (this.useLogging) {
-          console.info(`[MASTER -> PID ${worker.process.pid}]`, command);
+          console.info(`[PRIMARY -> PID ${worker.process.pid}]`, command);
         }
 
         worker.process.send(command);
