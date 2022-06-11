@@ -37,6 +37,28 @@ var import_cluster2 = __toESM(require("cluster"));
 var import_cluster = __toESM(require("cluster"));
 var os = __toESM(require("os"));
 
+// src/queue.ts
+var Queue = class {
+  constructor() {
+    this.queue = [];
+  }
+  add(command) {
+    return this.queue.push(command);
+  }
+  shift() {
+    return this.queue.shift();
+  }
+  next(worker) {
+    const command = this.queue.shift();
+    if (command === void 0) {
+      return;
+    }
+    const newCommand = command.clone("primary", worker.process.pid);
+    worker.send(newCommand);
+    return newCommand;
+  }
+};
+
 // src/worker.ts
 var Worker = class {
   constructor(worker, onMessage) {
@@ -70,23 +92,36 @@ var Worker = class {
 var cpus2 = os.cpus();
 var numWorkers = cpus2.length;
 var Master = class {
-  constructor(process, onMessage, onWorkerMessage) {
-    this.process = process;
+  constructor(process, onMessage, onWorkerMessage, showLogging = false) {
     this.workers = [];
-    process.on("message", (worker, message) => {
-      onMessage(worker, message);
+    this.priamryQueue = new Queue();
+    this.workerQueue = new Queue();
+    this.process = process;
+    this.showLogging = showLogging;
+    process.on("message", (worker, command) => {
+      if (command.command === "_next") {
+        const nextCommand = this.workerQueue.next(worker);
+        onMessage(worker, nextCommand);
+      } else {
+        onMessage(worker, command);
+      }
     });
     process.on("exit", (worker, code, signal) => {
-      console.info("Worker " + worker.process.pid + " died with code: " + code + ", and signal: " + signal);
-      console.info("Starting a new worker...");
+      if (this.showLogging) {
+        console.info("Worker " + worker.process.pid + " died with code: " + code + ", and signal: " + signal);
+      }
       this.spawnWorker();
     });
     process.on("online", (worker) => {
-      console.info("Worker " + worker.process.pid + " is online");
+      if (this.showLogging) {
+        console.info("Worker " + worker.process.pid + " is online");
+      }
       const newWorker = new Worker(worker, onWorkerMessage);
       this.workers.push(newWorker);
     });
-    console.info("Master cluster setting up " + numWorkers + " workers...");
+    if (this.showLogging) {
+      console.info("Master cluster setting up " + numWorkers + " workers...");
+    }
     for (var i = 0; i < numWorkers; i++) {
       this.spawnWorker();
     }
@@ -100,6 +135,14 @@ var Master = class {
     });
     return worker;
   }
+  async addTask(command) {
+    if (command.to === "primary") {
+      this.priamryQueue.add(command);
+    } else {
+      this.workerQueue.add(command);
+    }
+    return command;
+  }
   getWorkerProcesses() {
     return Object.values(import_cluster.default.workers);
   }
@@ -108,15 +151,14 @@ var Master = class {
       worker.restart();
     }
   }
-  send(target, message) {
+  send(command) {
     const workers = this.getWorkerProcesses();
     for (const worker of workers) {
-      if (target === "all" || worker.process !== void 0 && worker.process.pid === target) {
-        console.info(`[MASTER -> PID ${worker.process.pid}]`, message);
-        worker.process.send({
-          from: "master",
-          message
-        });
+      if (command.to === "workers" || worker.process !== void 0 && worker.process.pid === command.to) {
+        if (this.showLogging) {
+          console.info(`[MASTER -> PID ${worker.process.pid}]`, command);
+        }
+        worker.process.send(command);
       }
     }
   }
@@ -125,7 +167,7 @@ var Master = class {
 // src/index.ts
 function startCluster(onMasterStart, onMasterMessage, onWorkerStart, onWorkerMessage) {
   if (import_cluster2.default.isPrimary) {
-    const master = new Master(import_cluster2.default, onMasterMessage, onWorkerMessage);
+    const master = new Master(import_cluster2.default, onMasterMessage, onWorkerMessage, true);
     onMasterStart(master);
   } else {
     const worker = import_cluster2.default.worker;

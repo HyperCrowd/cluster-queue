@@ -2,13 +2,9 @@
 
 Easily sets up primary and worker clustering, allowing primary to contain pending jobs and for workers to grab them off the queue the moment they are availible.
 
-## Demo
-
-[![Try on StackBlitz](/docs/try.png)](https://stackblitz.com/edit/psysecgroup-cluster-queue)
-
 ## Install
 
-(Coming soon)
+[![Try on StackBlitz](/docs/try.png)](https://stackblitz.com/edit/psysecgroup-cluster-queue)
 
 `npm i -S @psysecgroup/cluster-queue` or `yarn add @psysecgroup/cluster-queue`
 

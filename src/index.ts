@@ -1,5 +1,7 @@
 import cluster from 'cluster';
+import { Cli } from './cli';
 import { Master } from './master';
+import { Queue } from './queue';
 
 export function startCluster(
   onMasterStart: (master: Master) => void,
@@ -8,7 +10,18 @@ export function startCluster(
   onWorkerMessage: (message: any) => void
 ) {
   if (cluster.isPrimary) {
-    const master = new Master(cluster, onMasterMessage, onWorkerMessage);
+    const primaryQueue = new Queue(cluster);
+    const workerQueue = new Queue(cluster);
+    const cli = new Cli(primaryQueue);
+    const master = new Master(
+      cluster,
+      cli,
+      primaryQueue,
+      workerQueue,
+      onMasterMessage,
+      onWorkerMessage,
+      true
+    );
     onMasterStart(master);
   } else {
     const worker = cluster.worker;

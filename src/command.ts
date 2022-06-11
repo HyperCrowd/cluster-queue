@@ -1,22 +1,17 @@
-type onCommandAction = (args: CommandArguments) => CommandArguments;
-interface CommandArguments {
-  [key: string]: any;
-}
+import { CommandAction, KeyPair } from './index.d';
 
-const commands: {
-  [key: string]: onCommandAction;
-} = {};
+const commands: KeyPair<CommandAction> = {};
 
 export class Command {
   command: string;
-  args: CommandArguments;
-  from: number;
-  to: number | 'all';
+  args: KeyPair;
+  from: number | 'primary' | 'cli';
+  to: number | 'workers' | 'primary';
 
   /**
    *
    */
-  static register(command: string, onAction: onCommandAction) {
+  static register(command: string, onAction: CommandAction) {
     commands[command] = onAction;
   }
 
@@ -25,9 +20,9 @@ export class Command {
    */
   constructor(
     command: string,
-    args: CommandArguments,
-    from: number,
-    to: number | 'all'
+    args: KeyPair,
+    from: number | 'primary' | 'cli',
+    to: number | 'workers' | 'primary'
   ) {
     if (commands[command] === undefined) {
       throw new RangeError(`"${command}" has not been regsitered.`);
@@ -36,6 +31,13 @@ export class Command {
     this.args = args;
     this.from = from;
     this.to = to;
+  }
+
+  /**
+   *
+   */
+  clone(from: number | 'primary', to: number | 'workers' | 'primary') {
+    return new Command(this.command, this.args, from, to);
   }
 
   /**
