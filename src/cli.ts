@@ -28,7 +28,7 @@ export class Cli {
     const isCliCommand = definition.command.indexOf('cli:') === 0;
 
     const commandName = isCliCommand
-      ? definition.command.substring(3)
+      ? definition.command.substring(4)
       : definition.command;
 
     // Register the definition as a command
@@ -39,9 +39,10 @@ export class Cli {
     }
 
     // Register the command
-    const newCommand = this.program
-      .command(commandName)
-      .description(definition.description);
+    const newCommand =
+      commandName === '' ? this.program : this.program.command(commandName);
+
+    newCommand.description(definition.description);
 
     // Define the end-of-line arguments
     const argKeys = Object.keys(definition.args);

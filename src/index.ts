@@ -27,6 +27,7 @@ export function startCluster(
       useLogging
     );
     onMasterStart(master);
+    cli.start();
   } else {
     const worker = cluster.worker;
     onWorkerStart(worker);
@@ -42,7 +43,9 @@ startCluster(
       description: 'Test',
       args: {},
       options: {},
-      action: (command: Command) => {},
+      action: (command: Command) => {
+        console.log(command);
+      },
     },
     {
       command: 'doThing',

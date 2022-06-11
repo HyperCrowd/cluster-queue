@@ -131,12 +131,13 @@ var Cli = class {
       return;
     }
     const isCliCommand = definition.command.indexOf("cli:") === 0;
-    const commandName = isCliCommand ? definition.command.substring(3) : definition.command;
+    const commandName = isCliCommand ? definition.command.substring(4) : definition.command;
     Command.register(commandName, definition.action);
     if (!isCliCommand) {
       return;
     }
-    const newCommand = this.program.command(commandName).description(definition.description);
+    const newCommand = commandName === "" ? this.program : this.program.command(commandName);
+    newCommand.description(definition.description);
     const argKeys = Object.keys(definition.args);
     for (const arg of argKeys) {
       const description2 = definition.args[arg];
@@ -313,6 +314,7 @@ function startCluster(commands2, onMasterStart, onMasterMessage, onWorkerStart, 
     const cli = new Cli(primaryQueue, commands2);
     const master = new Master(import_cluster3.default, cli, primaryQueue, workerQueue, onMasterMessage, onWorkerMessage, useLogging);
     onMasterStart(master);
+    cli.start();
   } else {
     const worker = import_cluster3.default.worker;
     onWorkerStart(worker);
@@ -325,6 +327,7 @@ startCluster([
     args: {},
     options: {},
     action: (command) => {
+      console.log(command);
     }
   },
   {
