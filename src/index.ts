@@ -1,4 +1,4 @@
-import type { CliDefinition } from './index.d';
+import type { CliDefinition, KeyPair } from './index.d';
 import cluster from 'cluster';
 import { Cli } from './cli';
 import { Command } from './command';
@@ -46,8 +46,10 @@ startCluster(
         '<pee>': 'no',
       },
       options: {},
-      action: (command: Command) => {
+      action: (args: KeyPair, state: KeyPair, command: Command) => {
+        state[command.command] = command.args;
         console.log(command);
+        console.log(state);
       },
     },
     {

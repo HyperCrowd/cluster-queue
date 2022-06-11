@@ -9,7 +9,11 @@ export interface iCommand {
   to: number | 'workers' | 'primary';
 }
 
-export type CommandAction = (args: KeyPair) => iCommand | void;
+export type CommandAction = (
+  args: KeyPair,
+  state: KeyPair,
+  command: iCommand
+) => iCommand | void;
 
 export interface CliDefinition {
   command: string;
@@ -18,3 +22,5 @@ export interface CliDefinition {
   options?: KeyPair;
   action: CommandAction;
 }
+
+export interface iQueue {}

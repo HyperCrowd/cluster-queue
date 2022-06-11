@@ -54,7 +54,9 @@ var require_package = __commonJS({
         watch: "tsup-node --watch --onSuccess 'node -r source-map-support/register dist/index.js'"
       },
       tsup: {
-        entry: ["src/index.ts"],
+        entry: [
+          "src/index.ts"
+        ],
         splitting: false,
         sourcemap: true,
         clean: true,
@@ -63,7 +65,9 @@ var require_package = __commonJS({
       main: "./dist/index.js",
       module: "./dist/esm/index.js",
       types: "./dist/index.d.ts",
-      files: ["/dist"],
+      files: [
+        "/dist"
+      ],
       devDependencies: {
         "@types/node": "^17.0.41",
         nodemon: "^2.0.16",
@@ -83,7 +87,7 @@ var src_exports = {};
 __export(src_exports, {
   startCluster: () => startCluster
 });
-var import_cluster3 = __toESM(require("cluster"));
+var import_cluster4 = __toESM(require("cluster"));
 
 // src/cli.ts
 var import_cluster = __toESM(require("cluster"));
@@ -107,8 +111,8 @@ var Command = class {
   clone(from, to) {
     return new Command(this.command, this.args, from, to);
   }
-  run() {
-    return commands[this.command](this.args);
+  run(state, priamryQueue, workerQueue) {
+    return commands[this.command](this.args, state, this, priamryQueue, workerQueue);
   }
 };
 
@@ -200,6 +204,7 @@ var numWorkers = cpus2.length;
 var Master = class {
   constructor(process2, cli, priamryQueue, workerQueue, onMessage, onWorkerMessage, useLogging = false) {
     this.workers = [];
+    this.state = {};
     this.cli = cli;
     this.process = process2;
     this.useLogging = useLogging;
@@ -207,8 +212,8 @@ var Master = class {
     this.workerQueue = workerQueue;
     process2.on("newCommand", (to) => {
       if (to === "primary") {
-        const command = this.workerQueue.next();
-        command.run();
+        const command = this.priamryQueue.next();
+        command.run(this.state);
       }
     });
     process2.on("message", (worker, command) => {
@@ -278,6 +283,7 @@ var Master = class {
 };
 
 // src/queue.ts
+var import_cluster3 = __toESM(require("cluster"));
 var Queue = class {
   constructor(primary) {
     this.queue = [];
@@ -292,14 +298,12 @@ var Queue = class {
     return this.queue.shift();
   }
   next(worker) {
-    console.log("this.queue", this.queue);
     const command = this.queue.shift();
-    console.log("this.queue.shift()", command);
     if (command === void 0) {
       return;
     }
-    const newCommand = command.clone("primary", worker.process.pid);
-    console.log("newCommand", newCommand);
+    const pid = import_cluster3.default.isPrimary ? "primary" : worker.process.pid;
+    const newCommand = command.clone("primary", pid);
     if (worker) {
       worker.send(newCommand);
     }
@@ -309,15 +313,15 @@ var Queue = class {
 
 // src/index.ts
 function startCluster(commands2, onMasterStart, onMasterMessage, onWorkerStart, onWorkerMessage, useLogging = false) {
-  if (import_cluster3.default.isPrimary) {
-    const primaryQueue = new Queue(import_cluster3.default);
-    const workerQueue = new Queue(import_cluster3.default);
+  if (import_cluster4.default.isPrimary) {
+    const primaryQueue = new Queue(import_cluster4.default);
+    const workerQueue = new Queue(import_cluster4.default);
     const cli = new Cli(primaryQueue, commands2);
-    const master = new Master(import_cluster3.default, cli, primaryQueue, workerQueue, onMasterMessage, onWorkerMessage, useLogging);
+    const master = new Master(import_cluster4.default, cli, primaryQueue, workerQueue, onMasterMessage, onWorkerMessage, useLogging);
     onMasterStart(master);
     cli.start();
   } else {
-    const worker = import_cluster3.default.worker;
+    const worker = import_cluster4.default.worker;
     onWorkerStart(worker);
   }
 }
@@ -330,8 +334,10 @@ startCluster([
       "<pee>": "no"
     },
     options: {},
-    action: (command) => {
+    action: (args, state, command) => {
+      state[command.command] = command.args;
       console.log(command);
+      console.log(state);
     }
   },
   {

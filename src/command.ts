@@ -1,4 +1,5 @@
 import type { CommandAction, iCommand, KeyPair } from './index.d';
+import { Queue } from './queue';
 
 const commands: KeyPair<CommandAction> = {};
 
@@ -44,7 +45,7 @@ export class Command implements iCommand {
   /**
    *
    */
-  run() {
-    return commands[this.command](this.args);
+  run(state: KeyPair, priamryQueue: Queue, workerQueue: Queue) {
+    return commands[this.command](this.args, state, this, priamryQueue, workerQueue);
   }
 }

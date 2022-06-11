@@ -2,6 +2,7 @@ type Process = typeof cluster;
 
 import cluster from 'cluster';
 import * as os from 'os';
+import { KeyPair } from '.';
 import { Cli } from './cli';
 import { Command } from './command';
 import { Queue } from './queue';
@@ -17,6 +18,7 @@ export class Master {
   workerQueue: Queue;
   useLogging: boolean;
   cli: Cli;
+  state: KeyPair = {}
 
   constructor(
     process: Process,
@@ -36,8 +38,8 @@ export class Master {
     process.on('newCommand', (to: string) => {
       // New command enqueued
       if (to === 'primary') {
-        const command = this.workerQueue.next();
-        command.run();
+        const command = this.priamryQueue.next();
+        command.run(this.state);
       }
     });
 
