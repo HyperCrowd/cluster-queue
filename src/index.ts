@@ -5,7 +5,7 @@ import { Command } from './command';
 import { Master } from './master';
 import { Queue } from './queue';
 
-export function startCluster(
+export async function startCluster(
   commands: CliDefinition[],
   onMasterStart: (master: Master) => void,
   onMasterMessage: (worker: typeof cluster.worker, message: any) => void,
@@ -26,11 +26,11 @@ export function startCluster(
       onWorkerMessage,
       useLogging
     );
-    onMasterStart(master);
+    await onMasterStart(master);
     cli.start();
   } else {
     const worker = cluster.worker;
-    onWorkerStart(worker);
+    await onWorkerStart(worker);
   }
 }
 

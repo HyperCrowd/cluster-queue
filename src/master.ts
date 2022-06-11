@@ -1,8 +1,8 @@
+import type { KeyPair } from './index.d';
 type Process = typeof cluster;
 
 import cluster from 'cluster';
 import * as os from 'os';
-import { KeyPair } from '.';
 import { Cli } from './cli';
 import { Command } from './command';
 import { Queue } from './queue';
@@ -14,42 +14,45 @@ const numWorkers = cpus.length;
 export class Master {
   process: Process;
   workers: Worker[] = [];
-  priamryQueue: Queue;
+  primaryQueue: Queue;
   workerQueue: Queue;
   useLogging: boolean;
   cli: Cli;
-  state: KeyPair = {}
+  state: KeyPair = {};
 
   constructor(
     process: Process,
     cli: Cli,
-    priamryQueue: Queue,
+    primaryQueue: Queue,
     workerQueue: Queue,
-    onMessage: (worker: typeof cluster.worker, command: Command) => void,
-    onWorkerMessage: (message: any) => void,
+    onMessage: (
+      worker: typeof cluster.worker,
+      command: Command
+    ) => Promise<void>,
+    onWorkerMessage: (message: any) => Promise<void>,
     useLogging: boolean = false
   ) {
     this.cli = cli;
     this.process = process;
     this.useLogging = useLogging;
-    this.priamryQueue = priamryQueue;
+    this.primaryQueue = primaryQueue;
     this.workerQueue = workerQueue;
 
     process.on('newCommand', (to: string) => {
       // New command enqueued
       if (to === 'primary') {
-        const command = this.priamryQueue.next();
-        command.run(this.state);
+        const command = this.primaryQueue.next();
+        command.run(this.state, this.primaryQueue, this.workerQueue);
       }
     });
 
-    process.on('message', (worker, command) => {
+    process.on('message', async (worker, command) => {
       // Primary receives message from worker
       if (command.command === '_next') {
         const nextCommand = this.workerQueue.next(worker);
-        onMessage(worker, nextCommand);
+        await onMessage(worker, nextCommand);
       } else {
-        onMessage(worker, command);
+        await onMessage(worker, command);
       }
     });
 
@@ -108,7 +111,7 @@ export class Master {
    */
   async addTask(command: Command): Promise<Command> {
     if (command.to === 'primary') {
-      this.priamryQueue.add(command);
+      this.primaryQueue.add(command);
     } else {
       this.workerQueue.add(command);
     }

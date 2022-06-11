@@ -173,10 +173,10 @@ var os = __toESM(require("os"));
 var Worker = class {
   constructor(worker, onMessage) {
     this.process = worker;
-    this.process.on("message", (message) => {
+    this.process.on("message", async (message) => {
       if (this.process.process !== void 0) {
         console.info(`[MASTER -> PID ${this.process.process.pid}]`, message);
-        onMessage(message);
+        await onMessage(message);
       }
     });
   }
@@ -202,26 +202,26 @@ var Worker = class {
 var cpus2 = os.cpus();
 var numWorkers = cpus2.length;
 var Master = class {
-  constructor(process2, cli, priamryQueue, workerQueue, onMessage, onWorkerMessage, useLogging = false) {
+  constructor(process2, cli, primaryQueue, workerQueue, onMessage, onWorkerMessage, useLogging = false) {
     this.workers = [];
     this.state = {};
     this.cli = cli;
     this.process = process2;
     this.useLogging = useLogging;
-    this.priamryQueue = priamryQueue;
+    this.primaryQueue = primaryQueue;
     this.workerQueue = workerQueue;
     process2.on("newCommand", (to) => {
       if (to === "primary") {
-        const command = this.priamryQueue.next();
-        command.run(this.state);
+        const command = this.primaryQueue.next();
+        command.run(this.state, this.primaryQueue, this.workerQueue);
       }
     });
-    process2.on("message", (worker, command) => {
+    process2.on("message", async (worker, command) => {
       if (command.command === "_next") {
         const nextCommand = this.workerQueue.next(worker);
-        onMessage(worker, nextCommand);
+        await onMessage(worker, nextCommand);
       } else {
-        onMessage(worker, command);
+        await onMessage(worker, command);
       }
     });
     process2.on("exit", (worker, code, signal) => {
@@ -255,7 +255,7 @@ var Master = class {
   }
   async addTask(command) {
     if (command.to === "primary") {
-      this.priamryQueue.add(command);
+      this.primaryQueue.add(command);
     } else {
       this.workerQueue.add(command);
     }
@@ -312,17 +312,17 @@ var Queue = class {
 };
 
 // src/index.ts
-function startCluster(commands2, onMasterStart, onMasterMessage, onWorkerStart, onWorkerMessage, useLogging = false) {
+async function startCluster(commands2, onMasterStart, onMasterMessage, onWorkerStart, onWorkerMessage, useLogging = false) {
   if (import_cluster4.default.isPrimary) {
     const primaryQueue = new Queue(import_cluster4.default);
     const workerQueue = new Queue(import_cluster4.default);
     const cli = new Cli(primaryQueue, commands2);
     const master = new Master(import_cluster4.default, cli, primaryQueue, workerQueue, onMasterMessage, onWorkerMessage, useLogging);
-    onMasterStart(master);
+    await onMasterStart(master);
     cli.start();
   } else {
     const worker = import_cluster4.default.worker;
-    onWorkerStart(worker);
+    await onWorkerStart(worker);
   }
 }
 startCluster([

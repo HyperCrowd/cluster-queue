@@ -2,6 +2,8 @@ export interface KeyPair<T = any> {
   [key: string]: T;
 }
 
+export interface iQueue {}
+
 export interface iCommand {
   command: string;
   args: KeyPair;
@@ -12,7 +14,9 @@ export interface iCommand {
 export type CommandAction = (
   args: KeyPair,
   state: KeyPair,
-  command: iCommand
+  command: iCommand,
+  primaryQueue: iQueue,
+  workerQueue: iQueue
 ) => iCommand | void;
 
 export interface CliDefinition {
@@ -22,5 +26,3 @@ export interface CliDefinition {
   options?: KeyPair;
   action: CommandAction;
 }
-
-export interface iQueue {}

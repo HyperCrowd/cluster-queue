@@ -8,13 +8,13 @@ export class Worker {
   /**
    *
    */
-  constructor(worker: Process, onMessage: (message: any) => void) {
+  constructor(worker: Process, onMessage: (message: any) => Promise<void>) {
     this.process = worker;
 
-    this.process.on('message', (message) => {
+    this.process.on('message', async (message) => {
       if (this.process.process !== undefined) {
         console.info(`[MASTER -> PID ${this.process.process.pid}]`, message);
-        onMessage(message);
+        await onMessage(message);
       }
     });
   }
