@@ -1,10 +1,15 @@
-import type { Command } from './command';
-
 export interface KeyPair<T = any> {
   [key: string]: T;
 }
 
-export type CommandAction = (args: KeyPair) => Command | void;
+export interface iCommand {
+  command: string;
+  args: KeyPair;
+  from: number | 'primary' | 'cli';
+  to: number | 'workers' | 'primary';
+}
+
+export type CommandAction = (args: KeyPair) => iCommand | void;
 
 export interface CliDefinition {
   command: string;

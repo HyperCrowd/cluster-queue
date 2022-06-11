@@ -4,7 +4,7 @@ import { Command as Commander } from 'commander';
 import { Queue } from './queue';
 import { Command } from './command';
 
-const { name, description, version } = require('./package.json');
+const { name, description, version } = require('../package.json');
 
 export class Cli {
   queue: Queue;

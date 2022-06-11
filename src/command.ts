@@ -1,8 +1,8 @@
-import { CommandAction, KeyPair } from './index.d';
+import type { CommandAction, iCommand, KeyPair } from './index.d';
 
 const commands: KeyPair<CommandAction> = {};
 
-export class Command {
+export class Command implements iCommand {
   command: string;
   args: KeyPair;
   from: number | 'primary' | 'cli';
