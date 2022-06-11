@@ -81,6 +81,18 @@ export class Master {
       const newWorker = new Worker(worker, onWorkerMessage);
       this.workers.push(newWorker);
     });
+  }
+
+  async start() {
+    await Promise.all([
+      new Promise((resolve) => {
+        setTimeout(() => {
+          if (this.primaryQueue.queue.length === 0) {
+            resolve(true);
+          }
+        }, 100);
+      }),
+    ]);
 
     if (this.useLogging) {
       console.info('Master cluster setting up ' + numWorkers + ' workers...');

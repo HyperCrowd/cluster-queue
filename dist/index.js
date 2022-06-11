@@ -237,6 +237,17 @@ var Master = class {
       const newWorker = new Worker(worker, onWorkerMessage);
       this.workers.push(newWorker);
     });
+  }
+  async start() {
+    await Promise.all([
+      new Promise((resolve) => {
+        setTimeout(() => {
+          if (this.primaryQueue.queue.length === 0) {
+            resolve(true);
+          }
+        }, 100);
+      })
+    ]);
     if (this.useLogging) {
       console.info("Master cluster setting up " + numWorkers + " workers...");
     }
@@ -318,8 +329,9 @@ async function startCluster(commands2, onMasterStart, onMasterMessage, onWorkerS
     const workerQueue = new Queue(import_cluster4.default);
     const cli = new Cli(primaryQueue, commands2);
     const master = new Master(import_cluster4.default, cli, primaryQueue, workerQueue, onMasterMessage, onWorkerMessage, useLogging);
-    await onMasterStart(master);
     cli.start();
+    await master.start();
+    await onMasterStart(master);
   } else {
     const worker = import_cluster4.default.worker;
     await onWorkerStart(worker);
@@ -336,8 +348,6 @@ startCluster([
     options: {},
     action: (args, state, command) => {
       state[command.command] = command.args;
-      console.log(command);
-      console.log(state);
     }
   },
   {

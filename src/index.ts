@@ -7,10 +7,13 @@ import { Queue } from './queue';
 
 export async function startCluster(
   commands: CliDefinition[],
-  onMasterStart: (master: Master) => void,
-  onMasterMessage: (worker: typeof cluster.worker, message: any) => void,
-  onWorkerStart: (worker: typeof cluster.worker) => void,
-  onWorkerMessage: (message: any) => void,
+  onMasterStart: (master: Master) => Promise<void>,
+  onMasterMessage: (
+    worker: typeof cluster.worker,
+    message: any
+  ) => Promise<void>,
+  onWorkerStart: (worker: typeof cluster.worker) => Promise<void>,
+  onWorkerMessage: (message: any) => Promise<void>,
   useLogging: boolean = false
 ) {
   if (cluster.isPrimary) {
@@ -26,8 +29,14 @@ export async function startCluster(
       onWorkerMessage,
       useLogging
     );
-    await onMasterStart(master);
+
+    // Parse the CLI
     cli.start();
+
+    // Wait for the primary queue to be empty
+
+    await master.start();
+    await onMasterStart(master);
   } else {
     const worker = cluster.worker;
     await onWorkerStart(worker);
@@ -48,8 +57,6 @@ startCluster(
       options: {},
       action: (args: KeyPair, state: KeyPair, command: Command) => {
         state[command.command] = command.args;
-        console.log(command);
-        console.log(state);
       },
     },
     {
