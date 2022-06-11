@@ -254,6 +254,7 @@ var Master = class {
     for (var i = 0; i < numWorkers; i++) {
       this.spawnWorker();
     }
+    console.log("why");
   }
   spawnWorker() {
     let worker = this.process.fork();

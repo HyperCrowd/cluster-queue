@@ -22,6 +22,9 @@ export class Cli {
     }
   }
 
+  /**
+   * Registers a new CLI command
+   */
   register(definition: CliDefinition) {
     if (!cluster.isPrimary) {
       return;
