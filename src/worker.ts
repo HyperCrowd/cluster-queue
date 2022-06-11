@@ -5,9 +5,6 @@ import cluster from 'cluster';
 export class Worker {
   process: Process;
 
-  /**
-   *
-   */
   constructor(worker: Process, onMessage: (message: any) => Promise<void>) {
     this.process = worker;
 
@@ -20,7 +17,7 @@ export class Worker {
   }
 
   /**
-   *
+   * Restarts the worker
    */
   restart() {
     this.send({
@@ -32,7 +29,7 @@ export class Worker {
   }
 
   /**
-   *
+   * Kills the worker
    */
   kill() {
     this.process.removeAllListeners();

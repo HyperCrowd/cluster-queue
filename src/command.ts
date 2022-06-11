@@ -10,14 +10,14 @@ export class Command implements iCommand {
   to: number | 'workers' | 'primary';
 
   /**
-   *
+   * Registers a new command
    */
   static register(command: string, onAction: CommandAction) {
     commands[command] = onAction;
   }
 
   /**
-   *
+   * Constructor
    */
   constructor(
     command: string,
@@ -36,16 +36,22 @@ export class Command implements iCommand {
   }
 
   /**
-   *
+   * Clones a command and changes the to and from properties
    */
   clone(from: number | 'primary', to: number | 'workers' | 'primary') {
     return new Command(this.command, this.args, from, to);
   }
 
   /**
-   *
+   * Runs the command
    */
   run(state: KeyPair, priamryQueue: Queue, workerQueue: Queue) {
-    return commands[this.command](this.args, state, this, priamryQueue, workerQueue);
+    return commands[this.command](
+      this.args,
+      state,
+      this,
+      priamryQueue,
+      workerQueue
+    );
   }
 }

@@ -87,7 +87,7 @@ export class Cli {
   }
 
   /**
-   *
+   * Start the CLI
    */
   start() {
     this.program.parse(process.argv);

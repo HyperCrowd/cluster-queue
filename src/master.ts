@@ -83,6 +83,9 @@ export class Master {
     });
   }
 
+  /**
+   * Starts the master process
+   */
   async start() {
     await Promise.all([
       new Promise((resolve) => {

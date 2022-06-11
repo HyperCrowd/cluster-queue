@@ -9,15 +9,12 @@ export class Queue implements iQueue {
   queue: Command[] = [];
   primary: Priamry;
 
-  /**
-   *
-   */
   constructor(primary: Priamry) {
     this.primary = primary;
   }
 
   /**
-   *
+   * Adds a command to the queue
    */
   add(command: Command) {
     const index = this.queue.push(command);
@@ -26,14 +23,14 @@ export class Queue implements iQueue {
   }
 
   /**
-   *
+   * Removes the first command from the queue
    */
   shift() {
     return this.queue.shift();
   }
 
   /**
-   *
+   * Gets the first command in the queue and may send it to the worker to do
    */
   next(worker?: Worker): Command | undefined {
     const command = this.queue.shift();

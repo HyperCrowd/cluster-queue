@@ -5,6 +5,9 @@ import { Command } from './command';
 import { Master } from './master';
 import { Queue } from './queue';
 
+/**
+ * Starts the clusterQueue
+ */
 export async function startCluster(
   commands: CliDefinition[],
   onMasterStart: (master: Master) => Promise<void>,
