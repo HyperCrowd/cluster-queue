@@ -22,10 +22,7 @@ export class Worker {
    * Restarts the worker
    */
   restart() {
-    this.send({
-      command: 'shutdown',
-      from: this.process.process.pid,
-    });
+    this.primaryCommand('shutdown');
 
     this.kill();
   }
@@ -50,14 +47,14 @@ export class Worker {
   /**
    *
    */
-  workerCommand(command: string, args: KeyPair) {
+  workerCommand(command: string, args: KeyPair = {}) {
     this.send(new Command(command, args, this.process.process.pid, 'workers'));
   }
 
   /**
    *
    */
-  primaryCommand(command: string, args: KeyPair) {
+  primaryCommand(command: string, args: KeyPair = {}) {
     this.send(new Command(command, args, this.process.process.pid, 'primary'));
   }
 }

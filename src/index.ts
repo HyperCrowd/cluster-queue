@@ -1,7 +1,6 @@
 import type { CliDefinition, KeyPair } from './index.d';
 import cluster from 'cluster';
 import { Cli } from './cli';
-import { Command } from './command';
 import { Primary } from './primary';
 import { Queue } from './queue';
 

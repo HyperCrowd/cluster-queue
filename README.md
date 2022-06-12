@@ -10,6 +10,8 @@ Easily sets up primary and worker clustering, allowing primary to contain pendin
 
 ## What It Does
 
+![Try on StackBlitz](/docs/concept.png)
+
 ## CLI
 
 ### npm
