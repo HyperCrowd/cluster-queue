@@ -8,6 +8,8 @@ Easily sets up primary and worker clustering, allowing primary to contain pendin
 
 `npm i -S @psysecgroup/cluster-queue` or `yarn add @psysecgroup/cluster-queue`
 
+## What It Does
+
 ## CLI
 
 ### npm

@@ -1,6 +1,8 @@
+import type { KeyPair } from './index.d';
 type Process = typeof cluster.worker;
 
 import cluster from 'cluster';
+import { Command } from './command';
 
 export class Worker {
   process: Process;
@@ -40,8 +42,22 @@ export class Worker {
   /**
    * Sends a message from the worker to the primary
    */
-  send(message) {
-    console.info(`[PID ${this.process.process.pid} -> PRIMARY]`, message);
-    this.process.process.send(message);
+  send(command: Command) {
+    console.info(`[PID ${this.process.process.pid} -> PRIMARY]`, command);
+    this.process.process.send(command);
+  }
+
+  /**
+   *
+   */
+  workerCommand(command: string, args: KeyPair) {
+    this.send(new Command(command, args, this.process.process.pid, 'workers'));
+  }
+
+  /**
+   *
+   */
+  primaryCommand(command: string, args: KeyPair) {
+    this.send(new Command(command, args, this.process.process.pid, 'primary'));
   }
 }

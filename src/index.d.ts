@@ -4,11 +4,15 @@ export interface KeyPair<T = any> {
 
 export interface iQueue {}
 
+export type CommandFrom = number | 'primary' | 'cli' | 'pipe';
+
+export type CommandTo = number | 'workers' | 'primary';
+
 export interface iCommand {
   command: string;
   args: KeyPair;
-  from: number | 'primary' | 'cli';
-  to: number | 'workers' | 'primary';
+  from: CommandFrom;
+  to: CommandTo;
 }
 
 export type CommandAction = (

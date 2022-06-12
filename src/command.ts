@@ -1,4 +1,10 @@
-import type { CommandAction, iCommand, KeyPair } from './index.d';
+import type {
+  CommandAction,
+  CommandFrom,
+  CommandTo,
+  iCommand,
+  KeyPair,
+} from './index.d';
 import { Queue } from './queue';
 
 const commands: KeyPair<CommandAction> = {};
@@ -6,8 +12,8 @@ const commands: KeyPair<CommandAction> = {};
 export class Command implements iCommand {
   command: string;
   args: KeyPair;
-  from: number | 'primary' | 'cli';
-  to: number | 'workers' | 'primary';
+  from: CommandFrom;
+  to: CommandTo;
 
   /**
    * Registers a new command
@@ -22,8 +28,8 @@ export class Command implements iCommand {
   constructor(
     command: string,
     args: KeyPair,
-    from: number | 'primary' | 'cli',
-    to: number | 'workers' | 'primary'
+    from: CommandFrom,
+    to: CommandTo
   ) {
     if (commands[command] === undefined) {
       throw new RangeError(`"${command}" has not been registered.`);
@@ -38,7 +44,7 @@ export class Command implements iCommand {
   /**
    * Clones a command and changes the to and from properties
    */
-  clone(from: number | 'primary', to: number | 'workers' | 'primary') {
+  clone(from: CommandFrom, to: CommandTo) {
     return new Command(this.command, this.args, from, to);
   }
 

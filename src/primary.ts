@@ -25,7 +25,7 @@ export class Primary {
     cli: Cli,
     primaryQueue: Queue,
     workerQueue: Queue,
-    onMessage: (
+    onPrimaryMessage: (
       worker: typeof cluster.worker,
       command: Command
     ) => Promise<void>,
@@ -41,18 +41,23 @@ export class Primary {
     process.on('newCommand', (to: string) => {
       // New command enqueued
       if (to === 'primary') {
+        // Primary should run its next command
         const command = this.primaryQueue.next();
         command.run(this.state, this.primaryQueue, this.workerQueue);
+      } else {
+        // All workers should be told a new command has appeared
+        this.send(new Command('_pending', {}, 'primary', 'workers'))
       }
     });
 
     process.on('message', async (worker, command) => {
       // Primary receives message from worker
+      console.log('WAT');
       if (command.command === '_next') {
         const nextCommand = this.workerQueue.next(worker);
-        await onMessage(worker, nextCommand);
+        await onPrimaryMessage(worker, nextCommand);
       } else {
-        await onMessage(worker, command);
+        await onPrimaryMessage(worker, command);
       }
     });
 
@@ -124,7 +129,7 @@ export class Primary {
   /**
    * Adds a command for later processing
    */
-  async addTask(command: Command): Promise<Command> {
+  addTask(command: Command): Command {
     if (command.to === 'primary') {
       this.primaryQueue.add(command);
     } else {
@@ -132,6 +137,20 @@ export class Primary {
     }
 
     return command;
+  }
+
+  /**
+   * 
+   */
+  workerCommand(command: string, args: KeyPair) {
+    this.addTask(new Command(command, args, 'primary', 'workers'))
+  }
+
+  /**
+   * 
+   */
+  primaryCommand(command: string, args: KeyPair) {
+    this.addTask(new Command(command, args, 'primary', 'primary'))
   }
 
   /**

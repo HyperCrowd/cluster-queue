@@ -50,13 +50,11 @@ var require_package = __commonJS({
         start: "node -r source-map-support/register dist/index.js",
         dev: `echo 'Type "npm run sb-watch" to get started'`,
         build: "tsup-node --legacy-output --minify --format esm,cjs,iife",
-        "sb-watch": `nodemon --watch src/ -e ts,tsx,js --exec "tsup-node --onSuccess 'node -r source-map-support/register dist/index.js test wee games'"`,
+        "sb-watch": `nodemon --watch src/ -e ts,tsx,js --exec "tsup-node --onSuccess 'node -r source-map-support/register dist/index.js setState test'"`,
         watch: "tsup-node --watch --onSuccess 'node -r source-map-support/register dist/index.js'"
       },
       tsup: {
-        entry: [
-          "src/index.ts"
-        ],
+        entry: ["src/index.ts"],
         splitting: false,
         sourcemap: true,
         clean: true,
@@ -65,9 +63,7 @@ var require_package = __commonJS({
       main: "./dist/index.js",
       module: "./dist/esm/index.js",
       types: "./dist/index.d.ts",
-      files: [
-        "/dist"
-      ],
+      files: ["/dist"],
       devDependencies: {
         "@types/node": "^17.0.41",
         nodemon: "^2.0.16",
@@ -202,7 +198,7 @@ var Worker = class {
 var cpus2 = os.cpus();
 var numWorkers = cpus2.length;
 var Primary = class {
-  constructor(process2, cli, primaryQueue, workerQueue, onMessage, onWorkerMessage, useLogging = false) {
+  constructor(process2, cli, primaryQueue, workerQueue, onPrimaryMessage, onWorkerMessage, useLogging = false) {
     this.workers = [];
     this.state = {};
     this.cli = cli;
@@ -214,14 +210,17 @@ var Primary = class {
       if (to === "primary") {
         const command = this.primaryQueue.next();
         command.run(this.state, this.primaryQueue, this.workerQueue);
+      } else {
+        this.send(new Command("_pending", {}, "primary", "workers"));
       }
     });
     process2.on("message", async (worker, command) => {
+      console.log("WAT");
       if (command.command === "_next") {
         const nextCommand = this.workerQueue.next(worker);
-        await onMessage(worker, nextCommand);
+        await onPrimaryMessage(worker, nextCommand);
       } else {
-        await onMessage(worker, command);
+        await onPrimaryMessage(worker, command);
       }
     });
     process2.on("exit", (worker, code, signal) => {
@@ -327,6 +326,10 @@ var Cluster = class {
   constructor(commands2, useLogging = false) {
     this.commands = commands2;
     this.useLogging = useLogging;
+    this.commands.push({
+      command: "log",
+      action: console.log
+    });
     return this;
   }
   onMessage(onPrimaryMessage, onWorkerMessage) {
@@ -351,24 +354,26 @@ var Cluster = class {
 (async function main() {
   const instance = new Cluster([
     {
-      command: "cli:test",
-      description: "Test",
+      command: "cli:setState",
+      description: "Sets a state in the primary process",
       args: {
-        "<test>": "A fun test",
-        "<pee>": "no"
+        "<text>": "The name of the state to set"
       },
       options: {},
-      action: (args, state, command) => {
-        state[command.command] = command.args;
-      }
-    },
-    {
-      command: "doThing",
-      action: (command) => {
+      action: (args, state) => {
+        state.text = args.cli.text;
       }
     }
-  ], true).onMessage(() => void 0, () => void 0);
-  await instance.start(() => void 0, () => void 0);
+  ], true).onMessage(async (worker, message) => {
+    console.log("PRIMARY MESSAGE");
+  }, async (message) => {
+    console.log("WORKER MESSAGE");
+  });
+  await instance.start(async () => {
+    console.log("PRIMARY START");
+  }, async () => {
+    console.log("WORKER START");
+  });
 })();
 module.exports = __toCommonJS(src_exports);
 // Annotate the CommonJS export names for ESM import in node:

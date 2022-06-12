@@ -17,11 +17,18 @@ export class Cluster {
   constructor(commands: CliDefinition[], useLogging: boolean = false) {
     this.commands = commands;
     this.useLogging = useLogging;
+
+    // Default actions
+    this.commands.push({
+      command: 'log',
+      action: console.log,
+    });
+
     return this;
   }
 
   /**
-   *
+   * Cluster node message handlers
    */
   onMessage(
     onPrimaryMessage: (
@@ -36,7 +43,7 @@ export class Cluster {
   }
 
   /**
-   *
+   * Start the cluster nodes
    */
   async start(
     onPrimaryStart: (primary: Primary) => Promise<void>,
@@ -75,30 +82,33 @@ export class Cluster {
   const instance = new Cluster(
     [
       {
-        command: 'cli:test',
-        description: 'Test',
+        command: 'cli:setState',
+        description: 'Sets a state in the primary process',
         args: {
-          '<test>': 'A fun test',
-          '<pee>': 'no',
+          '<text>': 'The name of the state to set',
         },
         options: {},
-        action: (args: KeyPair, state: KeyPair, command: Command) => {
-          state[command.command] = command.args;
+        action: (args: KeyPair, state: KeyPair) => {
+          state.text = args.cli.text;
         },
-      },
-      {
-        command: 'doThing',
-        action: (command: Command) => {},
       },
     ],
     true
   ).onMessage(
-    () => undefined,
-    () => undefined
+    async (worker: typeof cluster.worker, message: any) => {
+      console.log('PRIMARY MESSAGE');
+    },
+    async (message: any) => {
+      console.log('WORKER MESSAGE');
+    }
   );
 
   await instance.start(
-    () => undefined,
-    () => undefined
+    async () => {
+      console.log('PRIMARY START');
+    },
+    async () => {
+      console.log('WORKER START');
+    }
   );
 })();

@@ -16,13 +16,11 @@
     "start": "node -r source-map-support/register dist/index.js",
     "dev": "echo 'Type \"npm run sb-watch\" to get started'",
     "build": "tsup-node --legacy-output --minify --format esm,cjs,iife",
-    "sb-watch": "nodemon --watch src/ -e ts,tsx,js --exec \"tsup-node --onSuccess 'node -r source-map-support/register dist/index.js test wee games'\"",
+    "sb-watch": "nodemon --watch src/ -e ts,tsx,js --exec \"tsup-node --onSuccess 'node -r source-map-support/register dist/index.js setState test'\"",
     "watch": "tsup-node --watch --onSuccess 'node -r source-map-support/register dist/index.js'"
   },
   "tsup": {
-    "entry": [
-      "src/index.ts"
-    ],
+    "entry": ["src/index.ts"],
     "splitting": false,
     "sourcemap": true,
     "clean": true,
@@ -31,9 +29,7 @@
   "main": "./dist/index.js",
   "module": "./dist/esm/index.js",
   "types": "./dist/index.d.ts",
-  "files": [
-    "/dist"
-  ],
+  "files": ["/dist"],
   "devDependencies": {
     "@types/node": "^17.0.41",
     "nodemon": "^2.0.16",
