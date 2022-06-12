@@ -57,7 +57,7 @@ var require_package = __commonJS({
         entry: ["src/index.ts"],
         splitting: false,
         sourcemap: true,
-        clean: true,
+        clean: false,
         dts: true
       },
       main: "./dist/index.js",
@@ -177,10 +177,7 @@ var Worker = class {
     });
   }
   restart() {
-    this.send({
-      command: "shutdown",
-      from: this.process.process.pid
-    });
+    this.primaryCommand("shutdown");
     this.kill();
   }
   kill() {
@@ -188,9 +185,15 @@ var Worker = class {
     this.process.kill("SIGKILL");
     this.process = void 0;
   }
-  send(message) {
-    console.info(`[PID ${this.process.process.pid} -> PRIMARY]`, message);
-    this.process.process.send(message);
+  send(command) {
+    console.info(`[PID ${this.process.process.pid} -> PRIMARY]`, command);
+    this.process.process.send(command);
+  }
+  workerCommand(command, args = {}) {
+    this.send(new Command(command, args, this.process.process.pid, "workers"));
+  }
+  primaryCommand(command, args = {}) {
+    this.send(new Command(command, args, this.process.process.pid, "primary"));
   }
 };
 
@@ -263,13 +266,19 @@ var Primary = class {
     });
     return worker;
   }
-  async addTask(command) {
+  addTask(command) {
     if (command.to === "primary") {
       this.primaryQueue.add(command);
     } else {
       this.workerQueue.add(command);
     }
     return command;
+  }
+  workerCommand(command, args) {
+    this.addTask(new Command(command, args, "primary", "workers"));
+  }
+  primaryCommand(command, args) {
+    this.addTask(new Command(command, args, "primary", "primary"));
   }
   getWorkerProcesses() {
     return Object.values(import_cluster2.default.workers);

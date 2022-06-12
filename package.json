@@ -20,20 +20,16 @@
     "watch": "tsup-node --watch --onSuccess 'node -r source-map-support/register dist/index.js'"
   },
   "tsup": {
-    "entry": [
-      "src/index.ts"
-    ],
+    "entry": ["src/index.ts"],
     "splitting": false,
     "sourcemap": true,
-    "clean": true,
+    "clean": false,
     "dts": true
   },
   "main": "./dist/index.js",
   "module": "./dist/esm/index.js",
   "types": "./dist/index.d.ts",
-  "files": [
-    "/dist"
-  ],
+  "files": ["/dist"],
   "devDependencies": {
     "@types/node": "^17.0.41",
     "nodemon": "^2.0.16",
