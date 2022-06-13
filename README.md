@@ -86,6 +86,10 @@ Event definition only need the `command` and `action` properties defined.
 
 After saving the above code to `example.js`, you can try out the above code by typing `node example.js setText -f test`
 
+## Testing
+
+Add your tests to the [`tests`](tests) folder, then import them in the [`tests/index.ts`](tests/index.ts) file.
+
 ## CLI
 
 ### npm
@@ -93,9 +97,11 @@ After saving the above code to `example.js`, you can try out the above code by t
 - `npm run build`: Builds the source TypeScript to CommonJS, ESM, and IIFE JavaScript files in [`dist`](dist)
 - `npm run sb-watch`: Watches for changes for TypeScript files, builds the source on a change, then runs [`dist/index.js`](dist/index.js) (StackBlitz-friendly)
 - `npm run watch`: Watches for changes for TypeScript files, builds the source on a change, then runs [`dist/index.js`](dist/index.js) (Every other system)
+- `npm test`: Runs tests.
 
 ### yarn
 
 - `yarn build`: Builds the source TypeScript to CommonJS, ESM, and IIFE JavaScript files in [`dist`](dist)
 - `yarn sb-watch`: Watches for changes for TypeScript files, builds the source on a change, then runs [`dist/index.js`](dist/index.js) (StackBlitz-friendly)
 - `yarn watch`: Watches for changes for TypeScript files, builds the source on a change, then runs [`dist/index.js`](dist/index.js) (Every other system)
+- `yarn test`: Runs tests.

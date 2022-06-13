@@ -52,7 +52,7 @@ var require_package = __commonJS({
         build: "tsup-node --legacy-output --minify --format esm,cjs,iife",
         "sb-watch": `nodemon --watch src/ -e ts,tsx,js --exec "tsup-node --onSuccess 'node -r source-map-support/register dist/index.js setText -f test'"`,
         watch: "tsup-node --watch --onSuccess 'node -r source-map-support/register dist/index.js'",
-        test: "tsup-node --watch --onSuccess 'uvu -r esm -r source-map-support/register tests'"
+        test: `nodemon --watch tests/ -e ts,tsx,js --exec "tsup-node --entry.tests=tests/index.ts --onSuccess 'uvu -r source-map-support/register dist ^tests.js$'"`
       },
       tsup: {
         entry: ["src/index.ts"],
