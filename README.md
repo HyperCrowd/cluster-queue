@@ -4,7 +4,7 @@ Easily sets up primary and worker clustering, allowing primary to contain pendin
 
 ## Install
 
-[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/edit/psysecgroup-cluster-queue)
+[![Open in StackBlitz](https://developer.stackblitz.com/img/open_in_stackblitz.svg)](https://stackblitz.com/github/hypercrowd/cluster-queue)
 
 `npm i -S @psysecgroup/cluster-queue` or `yarn add @psysecgroup/cluster-queue`
 
