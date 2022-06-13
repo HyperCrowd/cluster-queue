@@ -19,7 +19,7 @@ export class Cluster {
   onPrimaryCommand: CommandAction = noop;
   onWorkerCommand: CommandAction = noop;
 
-  constructor(commands: CliDefinition[], useLogging: boolean = false) {
+  constructor(commands: CliDefinition[] = [], useLogging: boolean = false) {
     this.commands = commands;
     this.useLogging = useLogging;
 
@@ -81,7 +81,9 @@ export class Cluster {
         args: {
           '<text>': 'The name of the state to set',
         },
-        options: {},
+        options: {
+          '-f': 'Force the text',
+        },
         action: async (command: Command, state: KeyPair, sends: QuickSends) => {
           state.text = command.args.cli.text;
           console.log('setState', state);

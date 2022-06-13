@@ -50,13 +50,11 @@ var require_package = __commonJS({
         start: "node -r source-map-support/register dist/index.js",
         dev: `echo 'Type "npm run sb-watch" to get started'`,
         build: "tsup-node --legacy-output --minify --format esm,cjs,iife",
-        "sb-watch": `nodemon --watch src/ -e ts,tsx,js --exec "tsup-node --onSuccess 'node -r source-map-support/register dist/index.js setState test'"`,
+        "sb-watch": `nodemon --watch src/ -e ts,tsx,js --exec "tsup-node --onSuccess 'node -r source-map-support/register dist/index.js setState -f test'"`,
         watch: "tsup-node --watch --onSuccess 'node -r source-map-support/register dist/index.js'"
       },
       tsup: {
-        entry: [
-          "src/index.ts"
-        ],
+        entry: ["src/index.ts"],
         splitting: false,
         sourcemap: true,
         clean: false,
@@ -65,9 +63,7 @@ var require_package = __commonJS({
       main: "./dist/index.js",
       module: "./dist/esm/index.js",
       types: "./dist/index.d.ts",
-      files: [
-        "/dist"
-      ],
+      files: ["/dist"],
       devDependencies: {
         "@types/node": "^17.0.41",
         nodemon: "^2.0.16",
@@ -432,7 +428,7 @@ var Worker = class {
 // src/index.ts
 var noop = () => void 0;
 var Cluster = class {
-  constructor(commands2, useLogging = false) {
+  constructor(commands2 = [], useLogging = false) {
     this.onPrimaryCommand = noop;
     this.onWorkerCommand = noop;
     this.commands = commands2;
@@ -467,7 +463,9 @@ var Cluster = class {
       args: {
         "<text>": "The name of the state to set"
       },
-      options: {},
+      options: {
+        "-f": "Force the text"
+      },
       action: async (command, state, sends) => {
         state.text = command.args.cli.text;
         console.log("setState", state);

@@ -12,6 +12,71 @@ Easily sets up primary and worker clustering, allowing primary to contain pendin
 
 ![Try on StackBlitz](/docs/concept.png)
 
+## Getting Starting
+
+The very bare-minimum needed to get Cluster-Queue working:
+
+```ts
+import { Cluster } from '@psysecgroup/cluster-queue';
+
+const instance = new Cluster();
+await instance.start();
+```
+
+Here's a detailed breakdown of use every feature of Cluster-Queue:
+
+```ts
+// example.js
+
+import { Cluster } from '@psysecgroup/cluster-queue';
+
+const instance = new Cluster([{
+  // An example of a CLI command
+  command: 'cli:setState',
+  description: 'Sets a state in the primary process',
+  args: {
+    '<text>': 'The name of the state to set',
+  },
+  options: {
+    '-f': 'Force the text'
+  },
+  action: async (command, state, sends) => {
+    state.text = command.args.cli.text;
+    console.log('setState', state);
+  }
+}, {
+  // An example of a queue-able command
+  command: 'test',
+  action: async (command, state, sends) => {
+    sends.message('log', {
+      message: 'wee'
+    })
+  }
+}]).onCommand(
+  async (command, state, sends) => {
+    console.log('New Primary Command:', command);
+    console.log('Current Primary State:', state);
+  },
+  async (command, state, sends) => {
+    console.log('New Worker Command:', command);
+    console.log('Current Worker State:', state);
+  }
+);
+
+await instance.start(
+  async (primary) => {
+    console.log('Worker has started');
+  },
+  async (worker) => {
+    console.log('Worker has started');
+  }
+);
+```
+
+CLI command definition follows [Commander](https://www.npmjs.com/package/commander)
+
+To run the above code, run `node example.js setState -f test`
+
 ## CLI
 
 ### npm
