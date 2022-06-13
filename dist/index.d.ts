@@ -15,12 +15,17 @@ interface iCommand {
   to: CommandTo;
 }
 
+interface QuickSends {
+  getNextJob: () => void;
+  enqueueJob: (command: string, args: KeyPair, to: CommandTo) => void;
+  newJobNotice: () => void;
+  message: (command: string, args: KeyPair) => void;
+}
+
 type CommandAction = (
-  args: KeyPair,
-  state: KeyPair,
   command: iCommand,
-  primaryQueue: iQueue,
-  workerQueue: iQueue
+  state: KeyPair,
+  sends: QuickSends
 ) => iCommand | void;
 
 interface CliDefinition {
@@ -31,4 +36,4 @@ interface CliDefinition {
   action: CommandAction;
 }
 
-export { CliDefinition, CommandAction, CommandFrom, CommandTo, KeyPair, iCommand, iQueue };
+export { CliDefinition, CommandAction, CommandFrom, CommandTo, KeyPair, QuickSends, iCommand, iQueue };

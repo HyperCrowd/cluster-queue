@@ -1,4 +1,4 @@
-import type { CliDefinition, KeyPair } from './index.d';
+import type { CliDefinition, KeyPair, QuickSends } from './index.d';
 import cluster from 'cluster';
 import { Cli } from './cli';
 import { Primary } from './primary';
@@ -82,8 +82,8 @@ export class Cluster {
           '<text>': 'The name of the state to set',
         },
         options: {},
-        action: (args: KeyPair, state: KeyPair) => {
-          state.text = args.cli.text;
+        action: (command: Command, state: KeyPair, sends: QuickSends) => {
+          state.text = command.args.cli.text;
           console.log('setState', state);
         },
       },
