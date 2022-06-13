@@ -15,12 +15,17 @@ export interface iCommand {
   to: CommandTo;
 }
 
+export interface QuickSends {
+  getNextJob: (command: string, args: KeyPair) => void;
+  enqueueJob: (command: string, args: KeyPair) => void;
+  sendNewJob: (command: string, args: KeyPair) => void;
+  message: (command: string, args: KeyPair) => void;
+}
+
 export type CommandAction = (
-  args: KeyPair,
-  state: KeyPair,
   command: iCommand,
-  primaryQueue: iQueue,
-  workerQueue: iQueue
+  state: KeyPair,
+  sends: QuickSends
 ) => iCommand | void;
 
 export interface CliDefinition {

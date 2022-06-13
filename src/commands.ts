@@ -2,9 +2,10 @@ import type { CliDefinition, iCommand, KeyPair } from './index.d';
 import { Queue } from './queue';
 
 export const internalCommands = {
-  next: '_next',
-  enqueue: '_enqueue',
-  new: '_new',
+  nextJob: '_nextJob',
+  enqueueJob: '_enqueueJob',
+  newJob: '_newJob',
+  message: 'message',
 };
 
 export const defaultCommands: CliDefinition[] = [

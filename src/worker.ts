@@ -3,6 +3,7 @@ type Process = typeof cluster.worker;
 
 import cluster from 'cluster';
 import { Command } from './command';
+import { internalCommands } from './commands';
 
 export class Worker {
   process: Process;
@@ -10,7 +11,7 @@ export class Worker {
   constructor(worker: Process, onCommand: (command: Command) => Promise<void>) {
     this.process = worker;
 
-    this.process.on('message', async (command: Command) => {
+    this.process.on(internalCommands.message, async (command: Command) => {
       console.log('worker.message');
       console.info(`[PRIMARY -> PID ${this.process.process.pid}]`, command);
 

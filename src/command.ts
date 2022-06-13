@@ -4,8 +4,8 @@ import type {
   CommandTo,
   iCommand,
   KeyPair,
+  QuickSends,
 } from './index.d';
-import { Queue } from './queue';
 
 const commands: KeyPair<CommandAction> = {};
 
@@ -51,13 +51,7 @@ export class Command implements iCommand {
   /**
    * Runs the command
    */
-  async run(state: KeyPair, priamryQueue: Queue, workerQueue: Queue) {
-    return commands[this.command](
-      this.args,
-      state,
-      this,
-      priamryQueue,
-      workerQueue
-    );
+  async run(state: KeyPair, quickSends: QuickSends) {
+    return commands[this.command](this, state, quickSend);
   }
 }
