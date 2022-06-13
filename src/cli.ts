@@ -1,19 +1,17 @@
 import type { CliDefinition, KeyPair } from './index.d';
 import cluster from 'cluster';
 import { Command as Commander } from 'commander';
-import { Queue } from './queue';
 import { Command } from './command';
+import { internalCommands } from './commands';
 
 const { name, description, version } = require('../package.json');
 
 const removeChars = /[^A-Za-z0-9_]/g;
 
 export class Cli {
-  queue: Queue;
   program: Commander;
 
-  constructor(queue: Queue, definitions: CliDefinition[]) {
-    this.queue = queue;
+  constructor(definitions: CliDefinition[]) {
     this.program = new Commander();
     this.program.name(name).description(description).version(version);
 
@@ -80,7 +78,8 @@ export class Cli {
         i += 1;
       }
 
-      this.queue.add(
+      cluster.emit(
+        internalCommands.enqueue,
         new Command(definition.command, options, 'cli', 'primary')
       );
     });

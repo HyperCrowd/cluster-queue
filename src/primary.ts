@@ -7,6 +7,7 @@ import { Cli } from './cli';
 import { Command } from './command';
 import { Queue } from './queue';
 import { Worker } from './worker';
+import { internalCommands } from './commands';
 
 const cpus = os.cpus();
 const numWorkers = cpus.length;
@@ -23,46 +24,60 @@ export class Primary {
   constructor(
     process: Process,
     cli: Cli,
-    primaryQueue: Queue,
-    workerQueue: Queue,
     onPrimaryMessage: (
       worker: typeof cluster.worker,
       command: Command
-    ) => Promise<void>,
+    ) => Promise<Command | void>,
     onWorkerMessage: (message: any) => Promise<void>,
     useLogging: boolean = false
   ) {
     this.cli = cli;
     this.process = process;
     this.useLogging = useLogging;
-    this.primaryQueue = primaryQueue;
-    this.workerQueue = workerQueue;
+    this.primaryQueue = new Queue();
+    this.workerQueue = new Queue();
 
-    process.on('newCommand', (to: string) => {
-      // New command enqueued
-      if (to === 'primary') {
+    /**
+     * Enqueue new command
+     */
+    process.on(internalCommands.enqueue, async (command: Command) => {
+      if (command.to === 'primary') {
         // Primary should run its next command
-        const command = this.primaryQueue.next();
-        command.run(this.state, this.primaryQueue, this.workerQueue);
+        await command.run(this.state, this.primaryQueue, this.workerQueue);
       } else {
         // All workers should be told a new command has appeared
-        this.send(new Command('_pending', {}, 'primary', 'workers'));
+        this.addTask(command);
+        this.send(new Command(internalCommands.new, {}, 'primary', 'workers'));
       }
     });
 
+    /**
+     * Primary receives message from worker
+     */
     process.on('message', async (worker, command) => {
-      // Primary receives message from worker
       console.log('primary.message');
       if (command.command === 'next') {
-        const nextCommand = this.workerQueue.next(worker);
-        await onPrimaryMessage(worker, nextCommand);
+        const nextCommand = this.workerQueue.getNext(worker.process.pid);
+        if (nextCommand === undefined) {
+          return;
+        }
+
+        const finalCommand = await onPrimaryMessage(worker, nextCommand);
+
+        if (finalCommand) {
+          worker.send(finalCommand);
+        } else {
+          worker.send(nextCommand);
+        }
       } else {
         await onPrimaryMessage(worker, command);
       }
     });
 
+    /**
+     * When a worker quits
+     */
     process.on('exit', (worker, code, signal) => {
-      // When a worker quits
       if (this.useLogging) {
         console.info(
           'Worker ' +
@@ -77,8 +92,10 @@ export class Primary {
       this.spawnWorker();
     });
 
+    /**
+     * When a worker spawns
+     */
     process.on('online', (worker) => {
-      // When a worker spawns
       if (this.useLogging) {
         console.info('Worker ' + worker.process.pid + ' is online');
       }

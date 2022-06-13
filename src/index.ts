@@ -2,7 +2,6 @@ import type { CliDefinition, KeyPair } from './index.d';
 import cluster from 'cluster';
 import { Cli } from './cli';
 import { Primary } from './primary';
-import { Queue } from './queue';
 import { defaultCommands } from './commands';
 import { Command } from './command';
 
@@ -50,14 +49,10 @@ export class Cluster {
     onWorkerStart: (worker: typeof cluster.worker) => Promise<void>
   ) {
     if (cluster.isPrimary) {
-      const primaryQueue = new Queue(cluster);
-      const workerQueue = new Queue(cluster);
-      const cli = new Cli(primaryQueue, this.commands);
+      const cli = new Cli(this.commands);
       const primary = new Primary(
         cluster,
         cli,
-        primaryQueue,
-        workerQueue,
         this.onPrimaryCommand,
         this.onWorkerCommand,
         this.useLogging
@@ -90,16 +85,17 @@ export class Cluster {
         options: {},
         action: (args: KeyPair, state: KeyPair) => {
           state.text = args.cli.text;
+          console.log('setState', state);
         },
       },
     ],
     true
   ).onCommand(
     async (worker: typeof cluster.worker, command: Command) => {
-      console.log('PRIMARY COMMAND');
+      console.log('PRIMARY COMMAND', command);
     },
     async (command: Command) => {
-      console.log('WORKER COMMAND');
+      console.log('WORKER COMMAND', command);
     }
   );
 

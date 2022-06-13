@@ -1,6 +1,12 @@
 import type { CliDefinition, iCommand, KeyPair } from './index.d';
 import { Queue } from './queue';
 
+export const internalCommands = {
+  next: '_next',
+  enqueue: '_enqueue',
+  new: '_new',
+};
+
 export const defaultCommands: CliDefinition[] = [
   {
     command: 'log',

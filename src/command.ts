@@ -51,7 +51,7 @@ export class Command implements iCommand {
   /**
    * Runs the command
    */
-  run(state: KeyPair, priamryQueue: Queue, workerQueue: Queue) {
+  async run(state: KeyPair, priamryQueue: Queue, workerQueue: Queue) {
     return commands[this.command](
       this.args,
       state,
