@@ -82,6 +82,7 @@ export class Primary {
 
           default:
             console.warn('Unknown command:', command);
+            return;
         }
       }
     );
@@ -216,7 +217,6 @@ export class Primary {
       return;
     }
 
-    // @TODO might be bad
     const finalCommand = await this.onMessage(
       nextCommand,
       this.state,

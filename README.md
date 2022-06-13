@@ -10,7 +10,13 @@ Easily sets up primary and worker clustering, allowing primary to contain pendin
 
 ## What It Does
 
+Arcchitecture:
+
 ![Try on StackBlitz](/docs/concept.png)
+
+Queueing:
+
+![Try on StackBlitz](/docs/queue.png)
 
 ## Getting Starting
 

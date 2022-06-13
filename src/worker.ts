@@ -30,6 +30,20 @@ export class Worker {
       if (this.useLogging) {
         console.log('Worker Message:', command);
       }
+
+      switch (command.to) {
+        case internalCommands.newJobNotice:
+          this.sends.getNextJob();
+          break;
+
+        case internalCommands.message:
+          break;
+
+        default:
+          console.warn('Unknown command:', command);
+          return;
+      }
+
       const newCommand = await onCommand(command, this.state, this.sends);
 
       if (newCommand === undefined) {
