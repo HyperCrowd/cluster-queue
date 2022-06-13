@@ -43,16 +43,18 @@ export class Primary {
      */
     process.on(
       'message',
-      async (worker: Worker | Command, possibleCommand: Command) => {
-        const hasWorker = !(worker instanceof Command);
-        const command = (hasWorker ? possibleCommand : worker) as Command;
+      async (worker: Worker | Command, possibleCommand?: Command) => {
+        const hasWorker = possibleCommand !== undefined;
+        const command = Command.fromJSON(possibleCommand || worker);
 
         if (this.useLogging) {
-          const label = hasWorker
+          const from = hasWorker
             ? 'PID' + (worker as Worker).process.pid
             : (worker as Command).from;
 
-          console.log(`[${label}]:`, command);
+          console.log(
+            `[${from} -> ${command.to}] ${command.command} ${command.args}`
+          );
         }
 
         switch (command.to) {
@@ -105,6 +107,8 @@ export class Primary {
       if (this.useLogging) {
         console.info('Worker ' + worker.process.pid + ' is online');
       }
+
+      this.getNextJob(worker);
     });
   }
 

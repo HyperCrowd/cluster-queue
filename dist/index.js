@@ -99,6 +99,9 @@ var Command = class {
   static register(command, onAction) {
     commands[command] = onAction;
   }
+  static fromJSON(json) {
+    return new Command(json.command, json.args, json.from, json.to);
+  }
   constructor(command, args, from, to) {
     if (commands[command] === void 0 && command[0] !== "_") {
       throw new RangeError(`"${command}" has not been registered.`);
@@ -149,12 +152,8 @@ var Cli = class {
     if (!import_cluster.default.isPrimary) {
       return;
     }
-    const isCliCommand = definition.command.indexOf("cli:") === 0;
-    const commandName = isCliCommand ? definition.command.substring(4) : definition.command;
+    const commandName = definition.command.substring(4);
     Command.register(definition.command, definition.action);
-    if (!isCliCommand) {
-      return;
-    }
     const newCommand = commandName === "" ? this.program : this.program.command(commandName);
     newCommand.description(definition.description);
     const argKeys = Object.keys(definition.args);
@@ -244,11 +243,11 @@ var Primary = class {
     this.onMessage = onMessage;
     this.sends = getPrimaryEvents(this);
     process2.on("message", async (worker, possibleCommand) => {
-      const hasWorker = !(worker instanceof Command);
-      const command = hasWorker ? possibleCommand : worker;
+      const hasWorker = possibleCommand !== void 0;
+      const command = Command.fromJSON(possibleCommand || worker);
       if (this.useLogging) {
-        const label = hasWorker ? "PID" + worker.process.pid : worker.from;
-        console.log(`[${label}]:`, command);
+        const from = hasWorker ? "PID" + worker.process.pid : worker.from;
+        console.log(`[${from} -> ${command.to}] ${command.command} ${command.args}`);
       }
       switch (command.to) {
         case internalCommands.enqueueJob:
@@ -284,6 +283,7 @@ var Primary = class {
       if (this.useLogging) {
         console.info("Worker " + worker.process.pid + " is online");
       }
+      this.getNextJob(worker);
     });
   }
   async start() {
@@ -385,7 +385,7 @@ var Primary = class {
 function getWorkerEvents(worker) {
   return {
     getNextJob: () => {
-      return worker.process.send(new Command("", {}, worker.pid, internalCommands.getNextPrimaryJob));
+      return worker.process.send(new Command(internalCommands.getNextJob, {}, worker.pid, internalCommands.getNextJob));
     },
     enqueueJob: (command, args = {}, to = "workers") => {
       if (to === "primary") {
@@ -395,7 +395,7 @@ function getWorkerEvents(worker) {
       }
     },
     newJobNotice: () => {
-      return worker.process.send(new Command("", {}, worker.pid, internalCommands.newJobNotice));
+      return worker.process.send(new Command(internalCommands.newJobNotice, {}, worker.pid, internalCommands.newJobNotice));
     },
     message: async (command, args = {}) => {
       return worker.process.send(new Command(command, args, worker.pid, internalCommands.message));
@@ -407,13 +407,19 @@ function getWorkerEvents(worker) {
 var Worker = class {
   constructor(process2, onCommand, useLogging = false) {
     this.state = {};
+    this.isWorking = false;
     this.process = process2;
     this.useLogging = useLogging;
     this.pid = this.process.process.pid;
     this.sends = getWorkerEvents(this);
-    process2.on(internalCommands.message, async (command) => {
+    process2.on(internalCommands.message, async (json) => {
+      if (this.isWorking) {
+        return;
+      }
+      this.isWorking = true;
+      const command = Command.fromJSON(json);
       if (this.useLogging) {
-        console.log("Worker Message:", command);
+        console.log(`[PID ${this.pid}] :`, command);
       }
       switch (command.to) {
         case internalCommands.newJobNotice:
@@ -421,9 +427,6 @@ var Worker = class {
           break;
         case internalCommands.message:
           break;
-        default:
-          console.warn("Unknown command:", command);
-          return;
       }
       const newCommand = await onCommand(command, this.state, this.sends);
       if (newCommand === void 0) {
@@ -431,6 +434,8 @@ var Worker = class {
       } else {
         await newCommand.run(this.state, this.sends);
       }
+      this.isWorking = false;
+      this.sends.getNextJob();
     });
   }
   kill() {
@@ -444,12 +449,16 @@ var Worker = class {
 var noop = () => void 0;
 var Cluster = class {
   constructor(commands2 = [], useLogging = false) {
+    this.cliCommands = [];
     this.onPrimaryCommand = noop;
     this.onWorkerCommand = noop;
-    this.commands = commands2;
     this.useLogging = useLogging;
-    for (const defaultCommand of defaultCommands) {
-      this.commands.push(defaultCommand);
+    for (const defaultCommand of defaultCommands.concat(commands2)) {
+      if (defaultCommand.command.indexOf("cli:") === 0) {
+        this.cliCommands.push(defaultCommand);
+      } else {
+        Command.register(defaultCommand.command, defaultCommand.action);
+      }
     }
     return this;
   }
@@ -460,7 +469,7 @@ var Cluster = class {
   }
   async start(onPrimaryStart = noop, onWorkerStart = noop) {
     if (import_cluster3.default.isPrimary) {
-      const cli = new Cli(this.commands);
+      const cli = new Cli(this.cliCommands);
       const primary = new Primary(import_cluster3.default, cli, this.onPrimaryCommand, this.useLogging);
       cli.start();
       await primary.start();
@@ -489,7 +498,7 @@ var Cluster = class {
     {
       command: "iterate",
       action: async (command, state, sends) => {
-        if (state.value === 0) {
+        if (state.value === void 0) {
           state.value = 0;
         }
         state.value += 1;
@@ -503,6 +512,12 @@ var Cluster = class {
   });
   await instance.start(async (primary) => {
     console.log("PRIMARY START");
+    primary.sends.enqueueJob("iterate");
+    primary.sends.enqueueJob("iterate");
+    primary.sends.enqueueJob("iterate");
+    primary.sends.enqueueJob("iterate");
+    primary.sends.enqueueJob("iterate");
+    primary.sends.enqueueJob("iterate");
     primary.sends.enqueueJob("iterate");
   }, async (worker) => {
     console.log("WORKER START");

@@ -23,6 +23,13 @@ export class Command implements iCommand {
   }
 
   /**
+   * Generates a command from a JSON
+   */
+  static fromJSON(json: KeyPair) {
+    return new Command(json.command, json.args, json.from, json.to);
+  }
+
+  /**
    * Constructor
    */
   constructor(

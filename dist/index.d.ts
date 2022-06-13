@@ -26,9 +26,9 @@ interface iCommand {
 
 interface QuickSends {
   getNextJob: () => void;
-  enqueueJob: (command: string, args: KeyPair, to: CommandTo) => void;
+  enqueueJob: (command: string, args?: KeyPair, to?: CommandTo) => void;
   newJobNotice: () => void;
-  message: (command: string, args: KeyPair) => void;
+  message: (command: string, args?: KeyPair) => void;
 }
 
 type CommandAction = (

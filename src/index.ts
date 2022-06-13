@@ -14,18 +14,23 @@ import { Worker } from './worker';
 const noop = () => undefined;
 
 export class Cluster {
-  commands: CliDefinition[];
+  cliCommands: CliDefinition[] = [];
   useLogging: boolean;
   onPrimaryCommand: CommandAction = noop;
   onWorkerCommand: CommandAction = noop;
 
   constructor(commands: CliDefinition[] = [], useLogging: boolean = false) {
-    this.commands = commands;
     this.useLogging = useLogging;
 
     // Default actions
-    for (const defaultCommand of defaultCommands) {
-      this.commands.push(defaultCommand);
+    for (const defaultCommand of defaultCommands.concat(commands)) {
+      if (defaultCommand.command.indexOf('cli:') === 0) {
+        // Register CLI commands
+        this.cliCommands.push(defaultCommand);
+      } else {
+        // Register actions
+        Command.register(defaultCommand.command, defaultCommand.action);
+      }
     }
 
     return this;
@@ -48,7 +53,7 @@ export class Cluster {
     onWorkerStart: (worker: Worker) => Promise<void> = noop
   ) {
     if (cluster.isPrimary) {
-      const cli = new Cli(this.commands);
+      const cli = new Cli(this.cliCommands);
       const primary = new Primary(
         cluster,
         cli,
@@ -92,7 +97,7 @@ export class Cluster {
       {
         command: 'iterate',
         action: async (command: Command, state: KeyPair, sends: QuickSends) => {
-          if (state.value === 0) {
+          if (state.value === undefined) {
             state.value = 0;
           }
 
@@ -114,6 +119,12 @@ export class Cluster {
   await instance.start(
     async (primary: Primary) => {
       console.log('PRIMARY START');
+      primary.sends.enqueueJob('iterate');
+      primary.sends.enqueueJob('iterate');
+      primary.sends.enqueueJob('iterate');
+      primary.sends.enqueueJob('iterate');
+      primary.sends.enqueueJob('iterate');
+      primary.sends.enqueueJob('iterate');
       primary.sends.enqueueJob('iterate');
     },
     async (worker: Worker) => {

@@ -11,7 +11,12 @@ export function getWorkerEvents(worker: Worker) {
      */
     getNextJob: () => {
       return worker.process.send(
-        new Command('', {}, worker.pid, internalCommands.getNextPrimaryJob)
+        new Command(
+          internalCommands.getNextJob,
+          {},
+          worker.pid,
+          internalCommands.getNextJob
+        )
       );
     },
 
@@ -44,7 +49,12 @@ export function getWorkerEvents(worker: Worker) {
      */
     newJobNotice: () => {
       return worker.process.send(
-        new Command('', {}, worker.pid, internalCommands.newJobNotice)
+        new Command(
+          internalCommands.newJobNotice,
+          {},
+          worker.pid,
+          internalCommands.newJobNotice
+        )
       );
     },
 

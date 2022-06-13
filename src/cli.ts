@@ -28,18 +28,10 @@ export class Cli {
       return;
     }
 
-    const isCliCommand = definition.command.indexOf('cli:') === 0;
-
-    const commandName = isCliCommand
-      ? definition.command.substring(4)
-      : definition.command;
+    const commandName = definition.command.substring(4);
 
     // Register the definition as a command
     Command.register(definition.command, definition.action);
-
-    if (!isCliCommand) {
-      return;
-    }
 
     // Register the command
     const newCommand =

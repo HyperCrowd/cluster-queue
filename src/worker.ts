@@ -12,6 +12,7 @@ export class Worker {
   state: KeyPair = {};
   sends: QuickSends;
   pid: number;
+  isWorking: boolean = false;
 
   constructor(
     process: Process,
@@ -26,9 +27,16 @@ export class Worker {
     /**
      * Primary receives a general message from worker
      */
-    process.on(internalCommands.message, async (command: Command) => {
+    process.on(internalCommands.message, async (json: KeyPair) => {
+      if (this.isWorking) {
+        return;
+      }
+
+      this.isWorking = true;
+      const command = Command.fromJSON(json);
+
       if (this.useLogging) {
-        console.log('Worker Message:', command);
+        console.log(`[PID ${this.pid}] :`, command);
       }
 
       switch (command.to) {
@@ -38,10 +46,6 @@ export class Worker {
 
         case internalCommands.message:
           break;
-
-        default:
-          console.warn('Unknown command:', command);
-          return;
       }
 
       const newCommand = await onCommand(command, this.state, this.sends);
@@ -51,6 +55,9 @@ export class Worker {
       } else {
         await (newCommand as Command).run(this.state, this.sends);
       }
+      this.isWorking = false;
+
+      this.sends.getNextJob();
     });
   }
 
