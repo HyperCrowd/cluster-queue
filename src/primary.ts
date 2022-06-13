@@ -40,8 +40,8 @@ export class Primary {
     this.sends = {
       getNextJob: (command: string, args: KeyPair) => {
         return this.process.emit(
-          internalCommands.nextJob,
-          new Command(command, args, 'primary', 'primary')
+          internalCommands.getNextJob,
+          new Command(internalCommands.getNextJob, args, 'primary', 'primary')
         );
       },
       enqueueJob: (command: string, args: KeyPair) => {
@@ -50,10 +50,10 @@ export class Primary {
           new Command(command, args, 'primary', 'primary')
         );
       },
-      sendNewJob: (command: string, args: KeyPair) => {
-        return this.process.emit(
-          internalCommands.newJob,
-          new Command(command, args, 'primary', 'workers')
+      newJobNotice: () => {
+        // @TODO
+        this.send(
+          new Command(internalCommands.enqueueJob, {}, 'primary', 'workers')
         );
       },
       message: (command: string, args: KeyPair) => {
@@ -65,6 +65,19 @@ export class Primary {
     };
 
     /**
+     * Get the next Primary job
+     */
+    process.on(internalCommands.getNextJob, async (command: Command) => {
+      const nextCommand = this.primaryQueue.getNext('primary');
+
+      if (nextCommand === undefined) {
+        return;
+      }
+
+      await command.run(this.state, this.sends);
+    });
+
+    /**
      * Enqueue new command
      */
     process.on(internalCommands.enqueueJob, async (command: Command) => {
@@ -74,7 +87,7 @@ export class Primary {
       } else {
         // All workers should be told a new command has appeared
         this.addTask(command);
-        this.send(new Command(internalCommands.new, {}, 'primary', 'workers')); // @TODO
+        this.sends.newJobNotice();
       }
     });
 
@@ -203,6 +216,7 @@ export class Primary {
    * Send a message to workers
    */
   send(command: Command) {
+    // @TODO
     const workers = this.getWorkers();
 
     for (const worker of workers) {

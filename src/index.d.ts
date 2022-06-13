@@ -18,7 +18,7 @@ export interface iCommand {
 export interface QuickSends {
   getNextJob: (command: string, args: KeyPair) => void;
   enqueueJob: (command: string, args: KeyPair) => void;
-  sendNewJob: (command: string, args: KeyPair) => void;
+  newJobNotice: () => void;
   message: (command: string, args: KeyPair) => void;
 }
 

@@ -2,9 +2,9 @@ import type { CliDefinition, iCommand, KeyPair } from './index.d';
 import { Queue } from './queue';
 
 export const internalCommands = {
-  nextJob: '_nextJob',
+  getNextJob: '_getNextJob',
   enqueueJob: '_enqueueJob',
-  newJob: '_newJob',
+  newJobNotice: '_newJobNotice',
   message: 'message',
 };
 
