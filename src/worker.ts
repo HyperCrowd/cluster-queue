@@ -1,4 +1,4 @@
-import type { KeyPair } from './index.d';
+import type { KeyPair, QuickSends } from './index.d';
 type Process = typeof cluster.worker;
 
 import cluster from 'cluster';
@@ -7,27 +7,65 @@ import { internalCommands } from './commands';
 
 export class Worker {
   process: Process;
+  useLogging: boolean;
+  state: KeyPair = {};
+  sends: QuickSends;
+  pid: number;
 
-  constructor(worker: Process, onCommand: (command: Command) => Promise<void>) {
-    this.process = worker;
+  constructor(
+    process: Process,
+    onCommand: (command: Command) => Promise<Command | void>,
+    useLogging: boolean = false
+  ) {
+    this.process = process;
+    this.useLogging = useLogging;
+    this.pid = this.process.process.pid;
 
-    this.process.on(internalCommands.message, async (command: Command) => {
-      console.log('worker.message');
-      console.info(`[PRIMARY -> PID ${this.process.process.pid}]`, command);
+    this.sends = {
+      getNextJob: () => {
+        return this.process.send(
+          new Command(
+            internalCommands.getNextJob,
+            {},
+            this.pid,
+            internalCommands.getNextJob
+          )
+        ); // @TODO;
+      },
+      enqueueJob: (command: string, args: KeyPair) => {
+        return this.process.send(
+          new Command(command, args, this.pid, internalCommands.enqueueJob) // @TODO
+        );
+      },
+      newJobNotice: () => {
+        // @TODO
+      },
+      message: async (command: string, args: KeyPair) => {
+        if (this.useLogging) {
+          console.log('Worker Message:', command);
+        }
 
-      if (this.process.process !== undefined) {
-        await onCommand(command);
+        return this.process.send(
+          new Command(command, args, this.pid, internalCommands.message) // @TODO
+        );
+      },
+    };
+    /**
+     * Primary receives a general message from worker
+     */
+    process.on(internalCommands.message, async (command: Command) => {
+      if (this.useLogging) {
+        console.log('Primary Message:', command);
+      }
+      const newCommand = await onCommand(command);
+
+      // @TODO
+      if (newCommand === undefined) {
+        await command.run(this.state, this.sends);
+      } else {
+        await (newCommand as Command).run(this.state, this.sends);
       }
     });
-  }
-
-  /**
-   * Restarts the worker
-   */
-  restart() {
-    this.primaryCommand('shutdown');
-
-    this.kill();
   }
 
   /**
@@ -37,34 +75,5 @@ export class Worker {
     this.process.removeAllListeners();
     this.process.kill('SIGKILL');
     this.process = undefined;
-  }
-
-  /**
-   * Sends a message from the worker to the primary
-   */
-  send(command: Command) {
-    console.info(`[PID ${this.process.process.pid} -> PRIMARY]`, command);
-    this.process.process.send(command);
-  }
-
-  /**
-   *
-   */
-  getNext() {
-    this.send(new Command('next', {}, this.process.process.pid, 'primary'));
-  }
-
-  /**
-   *
-   */
-  workerCommand(command: string, args: KeyPair = {}) {
-    this.send(new Command(command, args, this.process.process.pid, 'workers'));
-  }
-
-  /**
-   *
-   */
-  primaryCommand(command: string, args: KeyPair = {}) {
-    this.send(new Command(command, args, this.process.process.pid, 'primary'));
   }
 }

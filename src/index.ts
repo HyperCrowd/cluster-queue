@@ -4,6 +4,7 @@ import { Cli } from './cli';
 import { Primary } from './primary';
 import { defaultCommands } from './commands';
 import { Command } from './command';
+import { Worker } from './worker';
 
 export class Cluster {
   commands: CliDefinition[];
@@ -46,7 +47,7 @@ export class Cluster {
    */
   async start(
     onPrimaryStart: (primary: Primary) => Promise<void>,
-    onWorkerStart: (worker: typeof cluster.worker) => Promise<void>
+    onWorkerStart: (worker: Worker) => Promise<void>
   ) {
     if (cluster.isPrimary) {
       const cli = new Cli(this.commands);
@@ -65,7 +66,9 @@ export class Cluster {
       await primary.start();
       await onPrimaryStart(primary);
     } else {
-      await onWorkerStart(cluster.worker);
+      await onWorkerStart(
+        new Worker(cluster.worker, this.onWorkerCommand, this.useLogging)
+      );
     }
   }
 }
@@ -99,10 +102,10 @@ export class Cluster {
   );
 
   await instance.start(
-    async () => {
+    async (primary: Primary) => {
       console.log('PRIMARY START');
     },
-    async () => {
+    async (worker: Worker) => {
       console.log('WORKER START');
     }
   );

@@ -1,5 +1,4 @@
-import type { CliDefinition, iCommand, KeyPair } from './index.d';
-import { Queue } from './queue';
+import type { CliDefinition } from './index.d';
 
 export const internalCommands = {
   getNextJob: '_getNextJob',
