@@ -11,11 +11,13 @@ import { defaultCommands } from './commands';
 import { Command } from './command';
 import { Worker } from './worker';
 
+const noop = () => undefined;
+
 export class Cluster {
   commands: CliDefinition[];
   useLogging: boolean;
-  onPrimaryCommand: CommandAction;
-  onWorkerCommand: CommandAction;
+  onPrimaryCommand: CommandAction = noop;
+  onWorkerCommand: CommandAction = noop;
 
   constructor(commands: CliDefinition[], useLogging: boolean = false) {
     this.commands = commands;
@@ -42,8 +44,8 @@ export class Cluster {
    * Start the cluster nodes
    */
   async start(
-    onPrimaryStart: (primary: Primary) => Promise<void>,
-    onWorkerStart: (worker: Worker) => Promise<void>
+    onPrimaryStart: (primary: Primary) => Promise<void> = noop,
+    onWorkerStart: (worker: Worker) => Promise<void> = noop
   ) {
     if (cluster.isPrimary) {
       const cli = new Cli(this.commands);

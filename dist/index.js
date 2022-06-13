@@ -430,8 +430,11 @@ var Worker = class {
 };
 
 // src/index.ts
+var noop = () => void 0;
 var Cluster = class {
   constructor(commands2, useLogging = false) {
+    this.onPrimaryCommand = noop;
+    this.onWorkerCommand = noop;
     this.commands = commands2;
     this.useLogging = useLogging;
     for (const defaultCommand of defaultCommands) {
@@ -444,7 +447,7 @@ var Cluster = class {
     this.onWorkerCommand = onWorkerCommand;
     return this;
   }
-  async start(onPrimaryStart, onWorkerStart) {
+  async start(onPrimaryStart = noop, onWorkerStart = noop) {
     if (import_cluster3.default.isPrimary) {
       const cli = new Cli(this.commands);
       const primary = new Primary(import_cluster3.default, cli, this.onPrimaryCommand, this.useLogging);

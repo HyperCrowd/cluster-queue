@@ -187,7 +187,7 @@ export class Primary {
   }
 
   /**
-   * @TODO
+   * Enqueues a command.  If from primary, it will run the command instead
    */
   private async enqueueJob(command: Command) {
     if (command.to === internalCommands.enqueueJobPrimary) {
@@ -207,7 +207,7 @@ export class Primary {
   }
 
   /**
-   * @TODO
+   * Gets the next job from the queue and sends it to a worker
    */
   private async getNextJob(worker: Worker) {
     const nextCommand = this.workerQueue.getNext(worker.process.pid);
@@ -231,7 +231,7 @@ export class Primary {
   }
 
   /**
-   * @TODO
+   * Gets the next priamry job and runs it
    */
   private async getNextPrimaryJob() {
     const nextCommand = this.primaryQueue.getNext('primary');
@@ -255,7 +255,7 @@ export class Primary {
   }
 
   /**
-   * @TODO
+   * Generic message handler
    */
   private async message(command: Command) {
     if (this.useLogging) {
@@ -266,7 +266,7 @@ export class Primary {
   }
 
   /**
-   * @TODO
+   * Sends a new job notice to valid workers
    */
   private newJobNotice() {
     // @TODO

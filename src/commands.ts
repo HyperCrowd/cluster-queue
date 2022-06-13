@@ -18,6 +18,9 @@ export const internalCommands: {
   message: 'message',
 };
 
+/**
+ * Default commands
+ */
 export const defaultCommands: CliDefinition[] = [
   {
     command: 'log',
