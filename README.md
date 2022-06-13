@@ -10,17 +10,17 @@ Easily sets up primary and worker clustering, allowing primary to contain pendin
 
 ## What It Does
 
-Arcchitecture:
+ClusterQueue arcchitecture allows for the following:
 
 ![Try on StackBlitz](/docs/concept.png)
 
-Queueing:
+ClusterQueue utilizes the following queue strategy for event looping:
 
 ![Try on StackBlitz](/docs/queue.png)
 
 ## Getting Starting
 
-The very bare-minimum needed to get Cluster-Queue working:
+The very bare-minimum needed to get ClusterQueue working:
 
 ```ts
 import { Cluster } from '@psysecgroup/cluster-queue';
@@ -29,7 +29,7 @@ const instance = new Cluster();
 await instance.start();
 ```
 
-Here's a detailed breakdown of use every feature of Cluster-Queue:
+Here's a detailed breakdown of use every feature of ClusterQueue:
 
 ```ts
 // example.js
@@ -78,9 +78,13 @@ const instance = new Cluster([
 );
 ```
 
-CLI command definition follows [Commander](https://www.npmjs.com/package/commander)
+Command definitions allow for CLI and event definitions.
 
-To run the above code, run `node example.js setState -f test`
+CLI command are specified with a `cli:` in the front of the command name while the `description`, `args`, `options`, and `actions` use a variation of the [Commander](https://www.npmjs.com/package/commander) format.
+
+Event definition only need the `command` and `action` properties defined.
+
+After saving the above code to `example.js`, you can try out the above code by typing `node example.js setText -f test`
 
 ## CLI
 
