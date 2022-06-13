@@ -54,7 +54,9 @@ var require_package = __commonJS({
         watch: "tsup-node --watch --onSuccess 'node -r source-map-support/register dist/index.js'"
       },
       tsup: {
-        entry: ["src/index.ts"],
+        entry: [
+          "src/index.ts"
+        ],
         splitting: false,
         sourcemap: true,
         clean: false,
@@ -63,7 +65,9 @@ var require_package = __commonJS({
       main: "./dist/index.js",
       module: "./dist/esm/index.js",
       types: "./dist/index.d.ts",
-      files: ["/dist"],
+      files: [
+        "/dist"
+      ],
       devDependencies: {
         "@types/node": "^17.0.41",
         nodemon: "^2.0.16",
@@ -508,7 +512,7 @@ var Cluster = class {
           state.value = 0;
         }
         state.value += 1;
-        console.log("value:", state.value);
+        console.log("Iterated value:", state.value);
       }
     }
   ], true).onCommand(async (command, state, sends) => {
@@ -516,7 +520,7 @@ var Cluster = class {
   }, async (command, state, sends) => {
     console.info(`Worker Message: ${command.command}`);
     sends.enqueueJob("iterateState", {
-      a: 1
+      commands: 1
     }, "primary");
   });
   await instance.start(async (primary) => {

@@ -36,45 +36,44 @@ Here's a detailed breakdown of use every feature of Cluster-Queue:
 
 import { Cluster } from '@psysecgroup/cluster-queue';
 
-const instance = new Cluster([{
-  // An example of a CLI command
-  command: 'cli:setState',
-  description: 'Sets a state in the primary process',
-  args: {
-    '<text>': 'The name of the state to set',
-  },
-  options: {
-    '-f': 'Force the text'
-  },
-  action: async (command, state, sends) => {
-    state.text = command.args.cli.text;
-    console.log('setState', state);
-  }
-}, {
-  // An example of a queue-able command
-  command: 'test',
-  action: async (command, state, sends) => {
-    sends.message('log', {
-      message: 'wee'
-    })
-  }
-}]).onCommand(
-  async (command, state, sends) => {
-    console.log('New Primary Command:', command);
-    console.log('Current Primary State:', state);
-  },
-  async (command, state, sends) => {
-    console.log('New Worker Command:', command);
-    console.log('Current Worker State:', state);
-  }
-);
+const instance = new Cluster([
+  {
+    command: 'cli:setText',
+    description: 'Sets text in the primary process',
+    args: {
+      '<text>': 'The name of the state to set',
+    },
+    options: {
+      '-f': 'First character only',
+    },
+    action: async (command, state, sends) => {
+      state.text =
+        command.args.f === true
+          ? command.args.cli.text[0]
+          : command.args.cli.text;
 
-await instance.start(
-  async (primary) => {
-    console.log('Worker has started');
+      console.log('setText', state);
+    },
   },
-  async (worker) => {
-    console.log('Worker has started');
+  {
+    command: 'iterate',
+    action: async (command, state, sends) => {
+      if (state.value === undefined) {
+        state.value = 0;
+      }
+
+      state.value += 1;
+      console.log('Iterated value:', state.value);
+    },
+  }],
+  true
+).onCommand(
+  async (command, state, sends) => {
+    console.info(`Primary Message: ${command.command}`);
+  },
+  async (command, state, sends) => {
+    console.info(`Worker Message: ${command.command}`);
+    sends.enqueueJob('iterateState', { commands: 1 }, 'primary');
   }
 );
 ```

@@ -106,7 +106,7 @@ export class Cluster {
           }
 
           state.value += 1;
-          console.log('value:', state.value);
+          console.log('Iterated value:', state.value);
         },
       },
     ],
