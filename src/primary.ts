@@ -46,14 +46,14 @@ export class Primary {
         command.run(this.state, this.primaryQueue, this.workerQueue);
       } else {
         // All workers should be told a new command has appeared
-        this.send(new Command('_pending', {}, 'primary', 'workers'))
+        this.send(new Command('_pending', {}, 'primary', 'workers'));
       }
     });
 
     process.on('message', async (worker, command) => {
       // Primary receives message from worker
-      console.log('WAT');
-      if (command.command === '_next') {
+      console.log('primary.message');
+      if (command.command === 'next') {
         const nextCommand = this.workerQueue.next(worker);
         await onPrimaryMessage(worker, nextCommand);
       } else {
@@ -140,17 +140,17 @@ export class Primary {
   }
 
   /**
-   * 
+   *
    */
   workerCommand(command: string, args: KeyPair) {
-    this.addTask(new Command(command, args, 'primary', 'workers'))
+    this.addTask(new Command(command, args, 'primary', 'workers'));
   }
 
   /**
-   * 
+   *
    */
   primaryCommand(command: string, args: KeyPair) {
-    this.addTask(new Command(command, args, 'primary', 'primary'))
+    this.addTask(new Command(command, args, 'primary', 'primary'));
   }
 
   /**

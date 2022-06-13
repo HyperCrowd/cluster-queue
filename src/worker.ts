@@ -7,13 +7,15 @@ import { Command } from './command';
 export class Worker {
   process: Process;
 
-  constructor(worker: Process, onMessage: (message: any) => Promise<void>) {
+  constructor(worker: Process, onCommand: (command: Command) => Promise<void>) {
     this.process = worker;
 
-    this.process.on('message', async (message) => {
+    this.process.on('message', async (command: Command) => {
+      console.log('worker.message');
+      console.info(`[PRIMARY -> PID ${this.process.process.pid}]`, command);
+
       if (this.process.process !== undefined) {
-        console.info(`[PRIMARY -> PID ${this.process.process.pid}]`, message);
-        await onMessage(message);
+        await onCommand(command);
       }
     });
   }
@@ -42,6 +44,13 @@ export class Worker {
   send(command: Command) {
     console.info(`[PID ${this.process.process.pid} -> PRIMARY]`, command);
     this.process.process.send(command);
+  }
+
+  /**
+   *
+   */
+  getNext() {
+    this.send(new Command('next', {}, this.process.process.pid, 'primary'));
   }
 
   /**

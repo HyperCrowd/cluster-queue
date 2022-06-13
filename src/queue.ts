@@ -2,14 +2,14 @@ import type { iQueue } from './index.d';
 import cluster from 'cluster';
 import { Command } from './command';
 
-type Priamry = typeof cluster;
+type Primary = typeof cluster;
 type Worker = typeof cluster.worker;
 
 export class Queue implements iQueue {
   queue: Command[] = [];
-  primary: Priamry;
+  primary: Primary;
 
-  constructor(primary: Priamry) {
+  constructor(primary: Primary) {
     this.primary = primary;
   }
 

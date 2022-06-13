@@ -3,41 +3,42 @@ import cluster from 'cluster';
 import { Cli } from './cli';
 import { Primary } from './primary';
 import { Queue } from './queue';
+import { defaultCommands } from './commands';
+import { Command } from './command';
 
 export class Cluster {
   commands: CliDefinition[];
   useLogging: boolean;
-  onPrimaryMessage: (
+  onPrimaryCommand: (
     worker: typeof cluster.worker,
-    message: any
+    command: Command
   ) => Promise<void>;
-  onWorkerMessage: (message: any) => Promise<void>;
+  onWorkerCommand: (command: Command) => Promise<void>;
 
   constructor(commands: CliDefinition[], useLogging: boolean = false) {
     this.commands = commands;
     this.useLogging = useLogging;
 
     // Default actions
-    this.commands.push({
-      command: 'log',
-      action: console.log,
-    });
+    for (const defaultCommand of defaultCommands) {
+      this.commands.push(defaultCommand);
+    }
 
     return this;
   }
 
   /**
-   * Cluster node message handlers
+   * Cluster node command handlers
    */
-  onMessage(
-    onPrimaryMessage: (
+  onCommand(
+    onPrimaryCommand: (
       worker: typeof cluster.worker,
-      message: any
+      command: Command
     ) => Promise<void>,
-    onWorkerMessage: (message: any) => Promise<void>
+    onWorkerCommand: (command: Command) => Promise<void>
   ) {
-    this.onPrimaryMessage = onPrimaryMessage;
-    this.onWorkerMessage = onWorkerMessage;
+    this.onPrimaryCommand = onPrimaryCommand;
+    this.onWorkerCommand = onWorkerCommand;
     return this;
   }
 
@@ -57,8 +58,8 @@ export class Cluster {
         cli,
         primaryQueue,
         workerQueue,
-        this.onPrimaryMessage,
-        this.onWorkerMessage,
+        this.onPrimaryCommand,
+        this.onWorkerCommand,
         this.useLogging
       );
 
@@ -93,12 +94,12 @@ export class Cluster {
       },
     ],
     true
-  ).onMessage(
-    async (worker: typeof cluster.worker, message: any) => {
-      console.log('PRIMARY MESSAGE');
+  ).onCommand(
+    async (worker: typeof cluster.worker, command: Command) => {
+      console.log('PRIMARY COMMAND');
     },
-    async (message: any) => {
-      console.log('WORKER MESSAGE');
+    async (command: Command) => {
+      console.log('WORKER COMMAND');
     }
   );
 
