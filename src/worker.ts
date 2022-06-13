@@ -36,7 +36,7 @@ export class Worker {
       const command = Command.fromJSON(json);
 
       if (this.useLogging) {
-        console.log(`[PID ${this.pid}] :`, command);
+        command.log('primary');
       }
 
       switch (command.to) {

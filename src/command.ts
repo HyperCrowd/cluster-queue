@@ -61,4 +61,14 @@ export class Command implements iCommand {
   async run(state: KeyPair, quickSends: QuickSends) {
     return commands[this.command](this, state, quickSends);
   }
+
+  /**
+   *
+   */
+  log(from?: string) {
+    console.log(
+      `[${from || this.from} -> ${this.to}] ${this.command}`,
+      this.args
+    );
+  }
 }

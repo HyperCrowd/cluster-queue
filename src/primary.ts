@@ -49,12 +49,10 @@ export class Primary {
 
         if (this.useLogging) {
           const from = hasWorker
-            ? 'PID' + (worker as Worker).process.pid
+            ? (worker as Worker).process.pid
             : (worker as Command).from;
 
-          console.log(
-            `[${from} -> ${command.to}] ${command.command} ${command.args}`
-          );
+          command.log(from.toString());
         }
 
         switch (command.to) {

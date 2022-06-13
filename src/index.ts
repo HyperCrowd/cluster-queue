@@ -109,16 +109,23 @@ export class Cluster {
     true
   ).onCommand(
     async (command: Command, state: KeyPair, sends: QuickSends) => {
-      console.log('PRIMARY COMMAND', command);
+      console.info(`Primary Message: ${command.command}`);
     },
     async (command: Command, state: KeyPair, sends: QuickSends) => {
-      console.log('WORKER COMMAND', command);
+      console.info(`Worker Message: ${command.command}`);
+      sends.enqueueJob(
+        'iterateState',
+        {
+          a: 1,
+        },
+        'primary'
+      );
     }
   );
 
   await instance.start(
     async (primary: Primary) => {
-      console.log('PRIMARY START');
+      console.info(`Primary ready`);
       primary.sends.enqueueJob('iterate');
       primary.sends.enqueueJob('iterate');
       primary.sends.enqueueJob('iterate');
@@ -128,7 +135,7 @@ export class Cluster {
       primary.sends.enqueueJob('iterate');
     },
     async (worker: Worker) => {
-      console.log('WORKER START');
+      console.info(`Worker ${worker.pid} ready`);
     }
   );
 })();

@@ -117,6 +117,9 @@ var Command = class {
   async run(state, quickSends) {
     return commands[this.command](this, state, quickSends);
   }
+  log(from) {
+    console.log(`[${from || this.from} -> ${this.to}] ${this.command}`, this.args);
+  }
 };
 
 // src/commands.ts
@@ -132,7 +135,27 @@ var defaultCommands = [
   {
     command: "log",
     action: async (command, state, sends) => {
-      console.log(command);
+      command.log();
+      console.log("State:", state);
+    }
+  },
+  {
+    command: "setState",
+    action: async (command, state, sends) => {
+      for (const key of Object.keys(command.args)) {
+        state[key] = command.args[key];
+      }
+    }
+  },
+  {
+    command: "iterateState",
+    action: async (command, state, sends) => {
+      for (const key of Object.keys(command.args)) {
+        if (state[key] === void 0) {
+          state[key] = 0;
+        }
+        state[key] += command.args[key];
+      }
     }
   }
 ];
@@ -246,8 +269,8 @@ var Primary = class {
       const hasWorker = possibleCommand !== void 0;
       const command = Command.fromJSON(possibleCommand || worker);
       if (this.useLogging) {
-        const from = hasWorker ? "PID" + worker.process.pid : worker.from;
-        console.log(`[${from} -> ${command.to}] ${command.command} ${command.args}`);
+        const from = hasWorker ? worker.process.pid : worker.from;
+        command.log(from.toString());
       }
       switch (command.to) {
         case internalCommands.enqueueJob:
@@ -419,7 +442,7 @@ var Worker = class {
       this.isWorking = true;
       const command = Command.fromJSON(json);
       if (this.useLogging) {
-        console.log(`[PID ${this.pid}] :`, command);
+        command.log("primary");
       }
       switch (command.to) {
         case internalCommands.newJobNotice:
@@ -506,12 +529,15 @@ var Cluster = class {
       }
     }
   ], true).onCommand(async (command, state, sends) => {
-    console.log("PRIMARY COMMAND", command);
+    console.info(`Primary Message: ${command.command}`);
   }, async (command, state, sends) => {
-    console.log("WORKER COMMAND", command);
+    console.info(`Worker Message: ${command.command}`);
+    sends.enqueueJob("iterateState", {
+      a: 1
+    }, "primary");
   });
   await instance.start(async (primary) => {
-    console.log("PRIMARY START");
+    console.info(`Primary ready`);
     primary.sends.enqueueJob("iterate");
     primary.sends.enqueueJob("iterate");
     primary.sends.enqueueJob("iterate");
@@ -520,7 +546,7 @@ var Cluster = class {
     primary.sends.enqueueJob("iterate");
     primary.sends.enqueueJob("iterate");
   }, async (worker) => {
-    console.log("WORKER START");
+    console.info(`Worker ${worker.pid} ready`);
   });
 })();
 module.exports = __toCommonJS(src_exports);
