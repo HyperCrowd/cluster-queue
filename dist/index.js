@@ -100,7 +100,7 @@ var Command = class {
     commands[command] = onAction;
   }
   constructor(command, args, from, to) {
-    if (commands[command] === void 0) {
+    if (commands[command] === void 0 && command[0] !== "_") {
       throw new RangeError(`"${command}" has not been registered.`);
     }
     this.command = command;
@@ -119,14 +119,18 @@ var Command = class {
 // src/commands.ts
 var internalCommands = {
   getNextJob: "_getNextJob",
+  getNextPrimaryJob: "_getNextJob_primary",
   enqueueJob: "_enqueueJob",
+  enqueueJobPrimary: "_enqueueJob_primary",
   newJobNotice: "_newJobNotice",
   message: "message"
 };
 var defaultCommands = [
   {
     command: "log",
-    action: console.log
+    action: async (command, state, sends) => {
+      console.log(command);
+    }
   }
 ];
 
@@ -170,7 +174,7 @@ var Cli = class {
         options.cli[key.replace(removeChars, "")] = args[i];
         i += 1;
       }
-      import_cluster.default.emit(internalCommands.enqueueJob, new Command(definition.command, options, "cli", "primary"));
+      import_cluster.default.emit("message", new Command(definition.command, options, "cli", internalCommands.enqueueJobPrimary));
     });
   }
   start() {
@@ -204,71 +208,70 @@ var Queue = class {
   }
 };
 
+// src/primaryEvents.ts
+function getPrimaryEvents(primary) {
+  return {
+    getNextJob: () => {
+      return primary.process.emit("message", new Command(internalCommands.getNextPrimaryJob, {}, "primary", internalCommands.getNextPrimaryJob));
+    },
+    enqueueJob: (command, args, to = "workers") => {
+      if (to === "primary") {
+        return primary.process.emit("message", new Command(command, args, "primary", internalCommands.enqueueJobPrimary));
+      } else {
+        return primary.process.emit("message", new Command(command, args, "primary", internalCommands.enqueueJob));
+      }
+    },
+    newJobNotice: () => {
+      return primary.process.emit("message", new Command(internalCommands.newJobNotice, {}, "primary", internalCommands.newJobNotice));
+    },
+    message: async (command, args) => {
+      return primary.process.emit("message", new Command(command, args, "primary", internalCommands.message));
+    }
+  };
+}
+
 // src/primary.ts
 var cpus2 = os.cpus();
 var numWorkers = cpus2.length;
 var Primary = class {
-  constructor(process2, cli, onPrimaryMessage, useLogging = false) {
+  constructor(process2, cli, onMessage, useLogging = false) {
     this.state = {};
     this.cli = cli;
     this.process = process2;
     this.useLogging = useLogging;
     this.primaryQueue = new Queue();
     this.workerQueue = new Queue();
-    this.sends = {
-      getNextJob: () => {
-        return this.process.emit(internalCommands.getNextJob + "_primary", new Command(internalCommands.getNextJob + "_primary", {}, "primary", "primary"));
-      },
-      enqueueJob: (command, args, to = "workers") => {
-        return this.process.emit(internalCommands.enqueueJob, new Command(command, args, "primary", to));
-      },
-      newJobNotice: () => {
-        this.send(new Command(internalCommands.enqueueJob, {}, "primary", "workers"));
-      },
-      message: async (command, args) => {
-        if (this.useLogging) {
-          console.log("Primary Message:", command);
-        }
-        await onPrimaryMessage(null, new Command(command, args, "primary", "primary"));
-      }
-    };
-    process2.on(internalCommands.enqueueJob, async (command) => {
-      if (command.to === "primary") {
-        await command.run(this.state, this.sends);
-      } else {
-        this.addTask(command);
-        this.sends.newJobNotice();
-      }
-    });
-    process2.on(internalCommands.getNextJob + "_primary", async (worker) => {
-      const nextCommand = this.primaryQueue.getNext(worker.process.pid);
-      if (nextCommand === void 0) {
-        return;
-      }
-      const finalCommand = await onPrimaryMessage(worker, nextCommand);
-      if (finalCommand) {
-        worker.send(finalCommand);
-      } else {
-        worker.send(nextCommand);
-      }
-    });
-    process2.on(internalCommands.getNextJob, async (worker) => {
-      const nextCommand = this.workerQueue.getNext(worker.process.pid);
-      if (nextCommand === void 0) {
-        return;
-      }
-      const finalCommand = await onPrimaryMessage(worker, nextCommand);
-      if (finalCommand) {
-        worker.send(finalCommand);
-      } else {
-        worker.send(nextCommand);
-      }
-    });
-    process2.on(internalCommands.message, async (worker, command) => {
+    this.onMessage = onMessage;
+    this.sends = getPrimaryEvents(this);
+    process2.on("message", async (worker, possibleCommand) => {
+      const hasWorker = !(worker instanceof Command);
+      const command = hasWorker ? possibleCommand : worker;
       if (this.useLogging) {
-        console.log("Primary Message:", command);
+        const label = hasWorker ? "PID" + worker.process.pid : worker.from;
+        console.log(`[${label}]:`, command);
       }
-      await onPrimaryMessage(worker, command);
+      switch (command.to) {
+        case internalCommands.enqueueJob:
+          await this.enqueueJob(command);
+          break;
+        case internalCommands.getNextJob:
+          await this.getNextJob(worker);
+          break;
+        case internalCommands.newJobNotice:
+          this.newJobNotice();
+          break;
+        case internalCommands.message:
+          await this.message(command);
+          break;
+        case internalCommands.enqueueJobPrimary:
+          await this.enqueueJob(command);
+          break;
+        case internalCommands.getNextPrimaryJob:
+          await this.getNextPrimaryJob();
+          break;
+        default:
+          console.warn("Unknown command:", command);
+      }
     });
     process2.on("exit", (worker, code, signal) => {
       if (this.useLogging) {
@@ -316,12 +319,6 @@ var Primary = class {
     }
     return command;
   }
-  workerCommand(command, args) {
-    this.addTask(new Command(command, args, "primary", "workers"));
-  }
-  primaryCommand(command, args) {
-    this.addTask(new Command(command, args, "primary", "primary"));
-  }
   getWorkers() {
     return Object.values(import_cluster2.default.workers);
   }
@@ -335,6 +332,100 @@ var Primary = class {
         worker.process.send(command);
       }
     }
+  }
+  async enqueueJob(command) {
+    if (command.to === internalCommands.enqueueJobPrimary) {
+      const newCommand = await this.onMessage(command, this.state, this.sends);
+      if (newCommand === void 0) {
+        await command.run(this.state, this.sends);
+      } else {
+        await newCommand.run(this.state, this.sends);
+      }
+    } else {
+      this.addTask(command);
+      this.sends.newJobNotice();
+    }
+  }
+  async getNextJob(worker) {
+    const nextCommand = this.workerQueue.getNext(worker.process.pid);
+    if (nextCommand === void 0) {
+      return;
+    }
+    const finalCommand = await this.onMessage(nextCommand, this.state, this.sends);
+    if (finalCommand) {
+      worker.send(finalCommand);
+    } else {
+      worker.send(nextCommand);
+    }
+  }
+  async getNextPrimaryJob() {
+    const nextCommand = this.primaryQueue.getNext("primary");
+    if (nextCommand === void 0) {
+      return;
+    }
+    const finalCommand = await this.onMessage(nextCommand, this.state, this.sends);
+    if (finalCommand === void 0) {
+      await nextCommand.run(this.state, this.sends);
+    } else {
+      await finalCommand.run(this.state, this.sends);
+    }
+  }
+  async message(command) {
+    if (this.useLogging) {
+      console.log("Primary Message:", command);
+    }
+    await this.onMessage(command, this.state, this.sends);
+  }
+  newJobNotice() {
+  }
+};
+
+// src/workerEvents.ts
+function getWorkerEvents(worker) {
+  return {
+    getNextJob: () => {
+      return worker.process.send(new Command("", {}, worker.pid, internalCommands.getNextPrimaryJob));
+    },
+    enqueueJob: (command, args, to = "workers") => {
+      if (to === "primary") {
+        return worker.process.send(new Command(command, args, worker.pid, internalCommands.enqueueJobPrimary));
+      } else {
+        return worker.process.send(new Command(command, args, worker.pid, internalCommands.enqueueJob));
+      }
+    },
+    newJobNotice: () => {
+      return worker.process.send(new Command("", {}, worker.pid, internalCommands.newJobNotice));
+    },
+    message: async (command, args) => {
+      return worker.process.send(new Command(command, args, worker.pid, internalCommands.message));
+    }
+  };
+}
+
+// src/worker.ts
+var Worker = class {
+  constructor(process2, onCommand, useLogging = false) {
+    this.state = {};
+    this.process = process2;
+    this.useLogging = useLogging;
+    this.pid = this.process.process.pid;
+    this.sends = getWorkerEvents(this);
+    process2.on(internalCommands.message, async (command) => {
+      if (this.useLogging) {
+        console.log("Worker Message:", command);
+      }
+      const newCommand = await onCommand(command, this.state, this.sends);
+      if (newCommand === void 0) {
+        await command.run(this.state, this.sends);
+      } else {
+        await newCommand.run(this.state, this.sends);
+      }
+    });
+  }
+  kill() {
+    this.process.removeAllListeners();
+    this.process.kill("SIGKILL");
+    this.process = void 0;
   }
 };
 
@@ -361,7 +452,7 @@ var Cluster = class {
       await primary.start();
       await onPrimaryStart(primary);
     } else {
-      await onWorkerStart(import_cluster3.default.worker);
+      await onWorkerStart(new Worker(import_cluster3.default.worker, this.onWorkerCommand, this.useLogging));
     }
   }
 };
@@ -374,19 +465,19 @@ var Cluster = class {
         "<text>": "The name of the state to set"
       },
       options: {},
-      action: (command, state, sends) => {
+      action: async (command, state, sends) => {
         state.text = command.args.cli.text;
         console.log("setState", state);
       }
     }
-  ], true).onCommand(async (worker, command) => {
+  ], true).onCommand(async (command, state, sends) => {
     console.log("PRIMARY COMMAND", command);
-  }, async (command) => {
+  }, async (command, state, sends) => {
     console.log("WORKER COMMAND", command);
   });
-  await instance.start(async () => {
+  await instance.start(async (primary) => {
     console.log("PRIMARY START");
-  }, async () => {
+  }, async (worker) => {
     console.log("WORKER START");
   });
 })();

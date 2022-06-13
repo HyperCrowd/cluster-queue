@@ -6,7 +6,16 @@ interface iQueue {}
 
 type CommandFrom = number | 'primary' | 'cli' | 'pipe';
 
-type CommandTo = number | 'workers' | 'primary';
+type CommandTo =
+  | number
+  | 'workers'
+  | 'primary'
+  | '_getNextJob'
+  | '_getNextJob_primary'
+  | '_enqueueJob'
+  | '_enqueueJob_primary'
+  | '_newJobNotice'
+  | 'message';
 
 interface iCommand {
   command: string;
@@ -26,7 +35,7 @@ type CommandAction = (
   command: iCommand,
   state: KeyPair,
   sends: QuickSends
-) => iCommand | void;
+) => Promise<iCommand | void>;
 
 interface CliDefinition {
   command: string;

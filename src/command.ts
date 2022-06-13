@@ -31,7 +31,7 @@ export class Command implements iCommand {
     from: CommandFrom,
     to: CommandTo
   ) {
-    if (commands[command] === undefined) {
+    if (commands[command] === undefined && command[0] !== '_') {
       throw new RangeError(`"${command}" has not been registered.`);
     }
 

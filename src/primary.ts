@@ -41,34 +41,50 @@ export class Primary {
     /**
      * Primary receives a general message from worker
      */
-    process.on('message', async (worker: Worker, command: Command) => {
-      if (this.useLogging) {
-        console.log(`[PID ${worker.process.pid}]:`, command);
-      }
+    process.on(
+      'message',
+      async (worker: Worker | Command, possibleCommand: Command) => {
+        const hasWorker = !(worker instanceof Command);
+        const command = (hasWorker ? possibleCommand : worker) as Command;
 
-      if (command.to === internalCommands.enqueueJob) {
-        // Enqueue Job
-        await this.enqueueJob(command);
-      } else if (command.to === internalCommands.getNextJob) {
-        // Get Next Job
-        await this.getNextJob(worker);
-      } else if (command.to === internalCommands.newJobNotice) {
-        // New Job Notice
-        this.newJobNotice();
-      } else if (command.to === internalCommands.message) {
-        // Message
-        await this.message(command);
-      } else if (command.to === internalCommands.enqueueJobPrimary) {
-        // Enqueue Primary Job
-        await this.enqueueJob(command);
-      } else if (command.to === internalCommands.getNextPrimaryJob) {
-        // Get Next Primary Job
-        await this.getNextPrimaryJob();
-      } else {
-        // Unknown command
-        console.warn('Unknown command:', command);
+        if (this.useLogging) {
+          const label = hasWorker
+            ? 'PID' + (worker as Worker).process.pid
+            : (worker as Command).from;
+
+          console.log(`[${label}]:`, command);
+        }
+
+        switch (command.to) {
+          case internalCommands.enqueueJob:
+            await this.enqueueJob(command);
+            break;
+
+          case internalCommands.getNextJob:
+            await this.getNextJob(worker as Worker);
+            break;
+
+          case internalCommands.newJobNotice:
+            this.newJobNotice();
+            break;
+
+          case internalCommands.message:
+            await this.message(command);
+            break;
+
+          case internalCommands.enqueueJobPrimary:
+            await this.enqueueJob(command);
+            break;
+
+          case internalCommands.getNextPrimaryJob:
+            await this.getNextPrimaryJob();
+            break;
+
+          default:
+            console.warn('Unknown command:', command);
+        }
       }
-    });
+    );
 
     /**
      * When a worker quits
@@ -174,9 +190,15 @@ export class Primary {
    * @TODO
    */
   private async enqueueJob(command: Command) {
-    if (command.to === 'primary') {
+    if (command.to === internalCommands.enqueueJobPrimary) {
       // Primary should run its next command
-      await command.run(this.state, this.sends);
+      const newCommand = await this.onMessage(command, this.state, this.sends);
+
+      if (newCommand === undefined) {
+        await command.run(this.state, this.sends);
+      } else {
+        await (newCommand as Command).run(this.state, this.sends);
+      }
     } else {
       // All workers should be told a new command has appeared
       this.addTask(command);

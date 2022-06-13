@@ -21,7 +21,6 @@ export class Worker {
     this.process = process;
     this.useLogging = useLogging;
     this.pid = this.process.process.pid;
-
     this.sends = getWorkerEvents(this);
 
     /**

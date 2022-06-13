@@ -12,7 +12,12 @@ export function getPrimaryEvents(primary: Primary) {
     getNextJob: () => {
       return primary.process.emit(
         'message',
-        new Command('', {}, 'primary', internalCommands.getNextPrimaryJob)
+        new Command(
+          internalCommands.getNextPrimaryJob,
+          {},
+          'primary',
+          internalCommands.getNextPrimaryJob
+        )
       );
     },
 
@@ -44,7 +49,12 @@ export function getPrimaryEvents(primary: Primary) {
     newJobNotice: () => {
       return primary.process.emit(
         'message',
-        new Command('', {}, 'primary', internalCommands.newJobNotice)
+        new Command(
+          internalCommands.newJobNotice,
+          {},
+          'primary',
+          internalCommands.newJobNotice
+        )
       );
     },
 
