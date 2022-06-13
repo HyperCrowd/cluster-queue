@@ -45,10 +45,12 @@ export class Cluster {
    */
   async start(
     onPrimaryStart: (primary: Primary) => Promise<void> = noop,
-    onWorkerStart: (worker: Worker) => Promise<void> = noop
+    onWorkerStart: (worker: Worker) => Promise<void> = noop,
+    cliActive: boolean = true,
+    maxCpus?: number
   ) {
     if (cluster.isPrimary) {
-      const cli = new Cli(this.cliCommands);
+      const cli = new Cli(this.cliCommands, cliActive);
       const primary = new Primary(
         cluster,
         cli,
@@ -60,7 +62,7 @@ export class Cluster {
       cli.start();
 
       // Wait for the primary queue to be empty
-      await primary.start();
+      await primary.start(maxCpus);
       await onPrimaryStart(primary);
     } else {
       await onWorkerStart(

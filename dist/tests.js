@@ -40,9 +40,9 @@ var require_package = __commonJS({
       scripts: {
         start: "node -r source-map-support/register dist/index.js",
         dev: `echo 'Type "npm run sb-watch" to get started'`,
-        build: "tsup-node --legacy-output --minify --format esm,cjs,iife",
-        "sb-watch": `nodemon --watch src/ -e ts,tsx,js --exec "tsup-node --onSuccess 'node -r source-map-support/register dist/index.js setText -f test'"`,
-        watch: "tsup-node --watch --onSuccess 'node -r source-map-support/register dist/index.js'",
+        build: "tsup-node --legacy-output --dts --minify --format esm,cjs,iife",
+        "sb-watch": `nodemon --watch src/ -e ts,tsx,js --exec "tsup-node --dts --onSuccess 'node -r source-map-support/register dist/index.js setText -f test'"`,
+        watch: "tsup-node --watch --dts --onSuccess 'node -r source-map-support/register dist/index.js'",
         test: `nodemon --watch tests/ -e ts,tsx,js --exec "tsup-node --entry.tests=tests/index.ts --onSuccess 'uvu -r source-map-support/register dist ^tests.js$'"`
       },
       tsup: {
@@ -50,7 +50,7 @@ var require_package = __commonJS({
         splitting: false,
         sourcemap: true,
         clean: false,
-        dts: true
+        dts: false
       },
       main: "./dist/index.js",
       module: "./dist/esm/index.js",
@@ -149,7 +149,12 @@ var defaultCommands = [
 var { name, description, version } = require_package();
 var removeChars = /[^A-Za-z0-9_]/g;
 var Cli = class {
-  constructor(definitions) {
+  constructor(definitions, active = true) {
+    this.active = true;
+    this.active = active;
+    if (this.active === false) {
+      return;
+    }
     this.program = new import_commander.Command();
     this.program.name(name).description(description).version(version);
     for (const definition of definitions) {
@@ -157,6 +162,9 @@ var Cli = class {
     }
   }
   register(definition) {
+    if (this.active === false) {
+      return;
+    }
     if (!import_cluster.default.isPrimary) {
       return;
     }
@@ -185,6 +193,9 @@ var Cli = class {
     });
   }
   start() {
+    if (this.active === false) {
+      return;
+    }
     this.program.parse(process.argv);
   }
 };
@@ -293,7 +304,7 @@ var Primary = class {
       this.getNextJob(worker);
     });
   }
-  async start() {
+  async start(maxCpus = numWorkers) {
     await Promise.all([
       new Promise((resolve) => {
         setTimeout(() => {
@@ -304,9 +315,9 @@ var Primary = class {
       })
     ]);
     if (this.useLogging) {
-      console.info("Primary cluster setting up " + numWorkers + " workers...");
+      console.info("Primary cluster setting up " + maxCpus + " workers...");
     }
-    for (var i = 0; i < numWorkers; i++) {
+    for (var i = 0; i < maxCpus; i++) {
       this.spawnWorker();
     }
   }
@@ -462,12 +473,12 @@ var Cluster = class {
     this.onWorkerCommand = onWorkerCommand;
     return this;
   }
-  async start(onPrimaryStart = noop, onWorkerStart = noop) {
+  async start(onPrimaryStart = noop, onWorkerStart = noop, cliActive = true, maxCpus) {
     if (import_cluster3.default.isPrimary) {
-      const cli = new Cli(this.cliCommands);
+      const cli = new Cli(this.cliCommands, cliActive);
       const primary = new Primary(import_cluster3.default, cli, this.onPrimaryCommand, this.useLogging);
       cli.start();
-      await primary.start();
+      await primary.start(maxCpus);
       await onPrimaryStart(primary);
     } else {
       await onWorkerStart(new Worker(import_cluster3.default.worker, this.onWorkerCommand, this.useLogging));
@@ -520,7 +531,7 @@ var import_uvu = require("uvu");
     primary.sends.enqueueJob("iterate");
   }, async (worker) => {
     console.info(`Worker ${worker.pid} ready`);
-  });
+  }, false, 0);
 });
 import_uvu.test.run();
 //# sourceMappingURL=tests.js.map

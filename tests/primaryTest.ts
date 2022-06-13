@@ -63,7 +63,9 @@ test('Test primary', async () => {
     },
     async (worker) => {
       console.info(`Worker ${worker.pid} ready`);
-    }
+    },
+    false,
+    0
   );
 });
 

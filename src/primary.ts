@@ -112,7 +112,7 @@ export class Primary {
   /**
    * Starts the priamry process
    */
-  async start() {
+  async start(maxCpus: number = numWorkers) {
     await Promise.all([
       new Promise((resolve) => {
         setTimeout(() => {
@@ -124,10 +124,10 @@ export class Primary {
     ]);
 
     if (this.useLogging) {
-      console.info('Primary cluster setting up ' + numWorkers + ' workers...');
+      console.info('Primary cluster setting up ' + maxCpus + ' workers...');
     }
 
-    for (var i = 0; i < numWorkers; i++) {
+    for (var i = 0; i < maxCpus; i++) {
       this.spawnWorker();
     }
   }

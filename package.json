@@ -15,9 +15,9 @@
   "scripts": {
     "start": "node -r source-map-support/register dist/index.js",
     "dev": "echo 'Type \"npm run sb-watch\" to get started'",
-    "build": "tsup-node --legacy-output --minify --format esm,cjs,iife",
-    "sb-watch": "nodemon --watch src/ -e ts,tsx,js --exec \"tsup-node --onSuccess 'node -r source-map-support/register dist/index.js setText -f test'\"",
-    "watch": "tsup-node --watch --onSuccess 'node -r source-map-support/register dist/index.js'",
+    "build": "tsup-node --legacy-output --dts --minify --format esm,cjs,iife",
+    "sb-watch": "nodemon --watch src/ -e ts,tsx,js --exec \"tsup-node --dts --onSuccess 'node -r source-map-support/register dist/index.js setText -f test'\"",
+    "watch": "tsup-node --watch --dts --onSuccess 'node -r source-map-support/register dist/index.js'",
     "test": "nodemon --watch tests/ -e ts,tsx,js --exec \"tsup-node --entry.tests=tests/index.ts --onSuccess 'uvu -r source-map-support/register dist ^tests.js$'\""
   },
   "tsup": {
@@ -25,7 +25,7 @@
     "splitting": false,
     "sourcemap": true,
     "clean": false,
-    "dts": true
+    "dts": false
   },
   "main": "./dist/index.js",
   "module": "./dist/esm/index.js",

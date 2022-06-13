@@ -10,8 +10,14 @@ const removeChars = /[^A-Za-z0-9_]/g;
 
 export class Cli {
   program: Commander;
+  active: boolean = true;
 
-  constructor(definitions: CliDefinition[]) {
+  constructor(definitions: CliDefinition[], active: boolean = true) {
+    this.active = active;
+    if (this.active === false) {
+      return;
+    }
+
     this.program = new Commander();
     this.program.name(name).description(description).version(version);
 
@@ -24,6 +30,10 @@ export class Cli {
    * Registers a new CLI command
    */
   register(definition: CliDefinition) {
+    if (this.active === false) {
+      return;
+    }
+
     if (!cluster.isPrimary) {
       return;
     }
@@ -86,6 +96,10 @@ export class Cli {
    * Start the CLI
    */
   start() {
+    if (this.active === false) {
+      return;
+    }
+
     this.program.parse(process.argv);
   }
 }
