@@ -52,6 +52,6 @@ export class Command implements iCommand {
    * Runs the command
    */
   async run(state: KeyPair, quickSends: QuickSends) {
-    return commands[this.command](this, state, quickSend);
+    return commands[this.command](this, state, quickSends);
   }
 }

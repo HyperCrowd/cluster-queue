@@ -54,7 +54,6 @@ export class Cluster {
         cluster,
         cli,
         this.onPrimaryCommand,
-        this.onWorkerCommand,
         this.useLogging
       );
 
