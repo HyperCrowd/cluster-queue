@@ -50,13 +50,11 @@ var require_package = __commonJS({
         start: "node -r source-map-support/register dist/index.js",
         dev: `echo 'Type "npm run sb-watch" to get started'`,
         build: "tsup-node --legacy-output --minify --format esm,cjs,iife",
-        "sb-watch": `nodemon --watch src/ -e ts,tsx,js --exec "tsup-node --onSuccess 'node -r source-map-support/register dist/index.js setState -f test'"`,
+        "sb-watch": `nodemon --watch src/ -e ts,tsx,js --exec "tsup-node --onSuccess 'node -r source-map-support/register dist/index.js setText -f test'"`,
         watch: "tsup-node --watch --onSuccess 'node -r source-map-support/register dist/index.js'"
       },
       tsup: {
-        entry: [
-          "src/index.ts"
-        ],
+        entry: ["src/index.ts"],
         splitting: false,
         sourcemap: true,
         clean: false,
@@ -65,9 +63,7 @@ var require_package = __commonJS({
       main: "./dist/index.js",
       module: "./dist/esm/index.js",
       types: "./dist/index.d.ts",
-      files: [
-        "/dist"
-      ],
+      files: ["/dist"],
       devDependencies: {
         "@types/node": "^17.0.41",
         nodemon: "^2.0.16",
@@ -279,9 +275,6 @@ var Primary = class {
         case internalCommands.getNextJob:
           await this.getNextJob(worker);
           break;
-        case internalCommands.newJobNotice:
-          this.newJobNotice();
-          break;
         case internalCommands.message:
           await this.message(command);
           break;
@@ -290,6 +283,8 @@ var Primary = class {
           break;
         case internalCommands.getNextPrimaryJob:
           await this.getNextPrimaryJob();
+          break;
+        case internalCommands.newJobNotice:
           break;
         default:
           console.warn("Unknown command:", command);
@@ -346,17 +341,6 @@ var Primary = class {
   getWorkers() {
     return Object.values(import_cluster2.default.workers);
   }
-  send(command) {
-    const workers = this.getWorkers();
-    for (const worker of workers) {
-      if (command.to === "workers" || worker.process !== void 0 && worker.process.pid === command.to) {
-        if (this.useLogging) {
-          console.info(`[PRIMARY -> PID ${worker.process.pid}]`, command);
-        }
-        worker.process.send(command);
-      }
-    }
-  }
   async enqueueJob(command) {
     if (command.to === internalCommands.enqueueJobPrimary) {
       const newCommand = await this.onMessage(command, this.state, this.sends);
@@ -367,7 +351,8 @@ var Primary = class {
       }
     } else {
       this.addTask(command);
-      this.sends.newJobNotice();
+      if (this.process.workers)
+        this.sends.newJobNotice();
     }
   }
   async getNextJob(worker) {
@@ -399,8 +384,6 @@ var Primary = class {
       console.log("Primary Message:", command);
     }
     await this.onMessage(command, this.state, this.sends);
-  }
-  newJobNotice() {
   }
 };
 
@@ -505,17 +488,17 @@ var Cluster = class {
 (async function main() {
   const instance = new Cluster([
     {
-      command: "cli:setState",
-      description: "Sets a state in the primary process",
+      command: "cli:setText",
+      description: "Sets text in the primary process",
       args: {
         "<text>": "The name of the state to set"
       },
       options: {
-        "-f": "Force the text"
+        "-f": "First character only"
       },
       action: async (command, state, sends) => {
-        state.text = command.args.cli.text;
-        console.log("setState", state);
+        state.text = command.args.f === true ? command.args.cli.text[0] : command.args.cli.text;
+        console.log("setText", state);
       }
     },
     {
@@ -538,12 +521,6 @@ var Cluster = class {
   });
   await instance.start(async (primary) => {
     console.info(`Primary ready`);
-    primary.sends.enqueueJob("iterate");
-    primary.sends.enqueueJob("iterate");
-    primary.sends.enqueueJob("iterate");
-    primary.sends.enqueueJob("iterate");
-    primary.sends.enqueueJob("iterate");
-    primary.sends.enqueueJob("iterate");
     primary.sends.enqueueJob("iterate");
   }, async (worker) => {
     console.info(`Worker ${worker.pid} ready`);

@@ -81,17 +81,21 @@ export class Cluster {
   const instance = new Cluster(
     [
       {
-        command: 'cli:setState',
-        description: 'Sets a state in the primary process',
+        command: 'cli:setText',
+        description: 'Sets text in the primary process',
         args: {
           '<text>': 'The name of the state to set',
         },
         options: {
-          '-f': 'Force the text',
+          '-f': 'First character only',
         },
         action: async (command: Command, state: KeyPair, sends: QuickSends) => {
-          state.text = command.args.cli.text;
-          console.log('setState', state);
+          state.text =
+            command.args.f === true
+              ? command.args.cli.text[0]
+              : command.args.cli.text;
+
+          console.log('setText', state);
         },
       },
       {
@@ -116,7 +120,7 @@ export class Cluster {
       sends.enqueueJob(
         'iterateState',
         {
-          a: 1,
+          commands: 1,
         },
         'primary'
       );
@@ -126,12 +130,6 @@ export class Cluster {
   await instance.start(
     async (primary: Primary) => {
       console.info(`Primary ready`);
-      primary.sends.enqueueJob('iterate');
-      primary.sends.enqueueJob('iterate');
-      primary.sends.enqueueJob('iterate');
-      primary.sends.enqueueJob('iterate');
-      primary.sends.enqueueJob('iterate');
-      primary.sends.enqueueJob('iterate');
       primary.sends.enqueueJob('iterate');
     },
     async (worker: Worker) => {

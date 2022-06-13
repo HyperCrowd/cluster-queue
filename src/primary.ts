@@ -64,10 +64,6 @@ export class Primary {
             await this.getNextJob(worker as Worker);
             break;
 
-          case internalCommands.newJobNotice:
-            this.newJobNotice();
-            break;
-
           case internalCommands.message:
             await this.message(command);
             break;
@@ -78,6 +74,9 @@ export class Primary {
 
           case internalCommands.getNextPrimaryJob:
             await this.getNextPrimaryJob();
+            break;
+
+          case internalCommands.newJobNotice:
             break;
 
           default:
@@ -169,27 +168,6 @@ export class Primary {
   }
 
   /**
-   * Send a message to workers
-   */
-  send(command: Command) {
-    // @TODO
-    const workers = this.getWorkers();
-
-    for (const worker of workers) {
-      if (
-        command.to === 'workers' ||
-        (worker.process !== undefined && worker.process.pid === command.to)
-      ) {
-        if (this.useLogging) {
-          console.info(`[PRIMARY -> PID ${worker.process.pid}]`, command);
-        }
-
-        worker.process.send(command);
-      }
-    }
-  }
-
-  /**
    * Enqueues a command.  If from primary, it will run the command instead
    */
   private async enqueueJob(command: Command) {
@@ -205,7 +183,8 @@ export class Primary {
     } else {
       // All workers should be told a new command has appeared
       this.addTask(command);
-      this.sends.newJobNotice();
+
+      if (this.process.workers) this.sends.newJobNotice();
     }
   }
 
@@ -265,12 +244,5 @@ export class Primary {
     }
 
     await this.onMessage(command, this.state, this.sends);
-  }
-
-  /**
-   * Sends a new job notice to valid workers
-   */
-  private newJobNotice() {
-    // @TODO
   }
 }
