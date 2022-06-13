@@ -7,7 +7,7 @@ import { Primary } from './primary';
 export function getPrimaryEvents(primary: Primary) {
   return {
     /**
-     *
+     * @TODO
      */
     getNextJob: () => {
       return primary.process.emit(
@@ -22,9 +22,13 @@ export function getPrimaryEvents(primary: Primary) {
     },
 
     /**
-     *
+     * @TODO
      */
-    enqueueJob: (command: string, args: KeyPair, to: CommandTo = 'workers') => {
+    enqueueJob: (
+      command: string,
+      args: KeyPair = {},
+      to: CommandTo = 'workers'
+    ) => {
       if (to === 'primary') {
         return primary.process.emit(
           'message',
@@ -44,7 +48,7 @@ export function getPrimaryEvents(primary: Primary) {
     },
 
     /**
-     *
+     * @TODO
      */
     newJobNotice: () => {
       return primary.process.emit(
@@ -59,9 +63,9 @@ export function getPrimaryEvents(primary: Primary) {
     },
 
     /**
-     *
+     * @TODO
      */
-    message: async (command: string, args: KeyPair) => {
+    message: async (command: string, args: KeyPair = {}) => {
       return primary.process.emit(
         'message',
         new Command(command, args, 'primary', internalCommands.message)

@@ -54,7 +54,9 @@ var require_package = __commonJS({
         watch: "tsup-node --watch --onSuccess 'node -r source-map-support/register dist/index.js'"
       },
       tsup: {
-        entry: ["src/index.ts"],
+        entry: [
+          "src/index.ts"
+        ],
         splitting: false,
         sourcemap: true,
         clean: false,
@@ -63,7 +65,9 @@ var require_package = __commonJS({
       main: "./dist/index.js",
       module: "./dist/esm/index.js",
       types: "./dist/index.d.ts",
-      files: ["/dist"],
+      files: [
+        "/dist"
+      ],
       devDependencies: {
         "@types/node": "^17.0.41",
         nodemon: "^2.0.16",
@@ -210,7 +214,7 @@ function getPrimaryEvents(primary) {
     getNextJob: () => {
       return primary.process.emit("message", new Command(internalCommands.getNextPrimaryJob, {}, "primary", internalCommands.getNextPrimaryJob));
     },
-    enqueueJob: (command, args, to = "workers") => {
+    enqueueJob: (command, args = {}, to = "workers") => {
       if (to === "primary") {
         return primary.process.emit("message", new Command(command, args, "primary", internalCommands.enqueueJobPrimary));
       } else {
@@ -220,7 +224,7 @@ function getPrimaryEvents(primary) {
     newJobNotice: () => {
       return primary.process.emit("message", new Command(internalCommands.newJobNotice, {}, "primary", internalCommands.newJobNotice));
     },
-    message: async (command, args) => {
+    message: async (command, args = {}) => {
       return primary.process.emit("message", new Command(command, args, "primary", internalCommands.message));
     }
   };
@@ -382,7 +386,7 @@ function getWorkerEvents(worker) {
     getNextJob: () => {
       return worker.process.send(new Command("", {}, worker.pid, internalCommands.getNextPrimaryJob));
     },
-    enqueueJob: (command, args, to = "workers") => {
+    enqueueJob: (command, args = {}, to = "workers") => {
       if (to === "primary") {
         return worker.process.send(new Command(command, args, worker.pid, internalCommands.enqueueJobPrimary));
       } else {
@@ -392,7 +396,7 @@ function getWorkerEvents(worker) {
     newJobNotice: () => {
       return worker.process.send(new Command("", {}, worker.pid, internalCommands.newJobNotice));
     },
-    message: async (command, args) => {
+    message: async (command, args = {}) => {
       return worker.process.send(new Command(command, args, worker.pid, internalCommands.message));
     }
   };
@@ -470,6 +474,16 @@ var Cluster = class {
         state.text = command.args.cli.text;
         console.log("setState", state);
       }
+    },
+    {
+      command: "iterate",
+      action: async (command, state, sends) => {
+        if (state.value === 0) {
+          state.value = 0;
+        }
+        state.value += 1;
+        console.log("value:", state.value);
+      }
     }
   ], true).onCommand(async (command, state, sends) => {
     console.log("PRIMARY COMMAND", command);
@@ -478,6 +492,7 @@ var Cluster = class {
   });
   await instance.start(async (primary) => {
     console.log("PRIMARY START");
+    primary.sends.enqueueJob("iterate");
   }, async (worker) => {
     console.log("WORKER START");
   });
