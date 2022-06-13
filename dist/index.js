@@ -51,12 +51,11 @@ var require_package = __commonJS({
         dev: `echo 'Type "npm run sb-watch" to get started'`,
         build: "tsup-node --legacy-output --minify --format esm,cjs,iife",
         "sb-watch": `nodemon --watch src/ -e ts,tsx,js --exec "tsup-node --onSuccess 'node -r source-map-support/register dist/index.js setText -f test'"`,
-        watch: "tsup-node --watch --onSuccess 'node -r source-map-support/register dist/index.js'"
+        watch: "tsup-node --watch --onSuccess 'node -r source-map-support/register dist/index.js'",
+        test: "tsup-node --watch --onSuccess 'uvu -r esm -r source-map-support/register tests'"
       },
       tsup: {
-        entry: [
-          "src/index.ts"
-        ],
+        entry: ["src/index.ts"],
         splitting: false,
         sourcemap: true,
         clean: false,
@@ -65,15 +64,14 @@ var require_package = __commonJS({
       main: "./dist/index.js",
       module: "./dist/esm/index.js",
       types: "./dist/index.d.ts",
-      files: [
-        "/dist"
-      ],
+      files: ["/dist"],
       devDependencies: {
         "@types/node": "^17.0.41",
         nodemon: "^2.0.16",
         "source-map-support": "^0.5.21",
         tsup: "^6.1.0",
-        typescript: "^4.7.3"
+        typescript: "^4.7.3",
+        uvu: "^0.5.3"
       },
       dependencies: {
         commander: "^9.3.0"
