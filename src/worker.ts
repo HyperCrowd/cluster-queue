@@ -1,9 +1,10 @@
-import type { KeyPair, QuickSends } from './index.d';
+import type { CommandAction, KeyPair, QuickSends } from './index.d';
 type Process = typeof cluster.worker;
 
 import cluster from 'cluster';
 import { Command } from './command';
 import { internalCommands } from './commands';
+import { getWorkerEvents } from './workerEvents';
 
 export class Worker {
   process: Process;
@@ -14,52 +15,24 @@ export class Worker {
 
   constructor(
     process: Process,
-    onCommand: (command: Command) => Promise<Command | void>,
+    onCommand: CommandAction,
     useLogging: boolean = false
   ) {
     this.process = process;
     this.useLogging = useLogging;
     this.pid = this.process.process.pid;
 
-    this.sends = {
-      getNextJob: () => {
-        return this.process.send(
-          new Command(
-            internalCommands.getNextJob,
-            {},
-            this.pid,
-            internalCommands.getNextJob
-          )
-        ); // @TODO;
-      },
-      enqueueJob: (command: string, args: KeyPair) => {
-        return this.process.send(
-          new Command(command, args, this.pid, internalCommands.enqueueJob) // @TODO
-        );
-      },
-      newJobNotice: () => {
-        // @TODO
-      },
-      message: async (command: string, args: KeyPair) => {
-        if (this.useLogging) {
-          console.log('Worker Message:', command);
-        }
+    this.sends = getWorkerEvents(this);
 
-        return this.process.send(
-          new Command(command, args, this.pid, internalCommands.message) // @TODO
-        );
-      },
-    };
     /**
      * Primary receives a general message from worker
      */
     process.on(internalCommands.message, async (command: Command) => {
       if (this.useLogging) {
-        console.log('Primary Message:', command);
+        console.log('Worker Message:', command);
       }
-      const newCommand = await onCommand(command);
+      const newCommand = await onCommand(command, this.state, this.sends);
 
-      // @TODO
       if (newCommand === undefined) {
         await command.run(this.state, this.sends);
       } else {

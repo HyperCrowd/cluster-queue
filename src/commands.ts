@@ -1,8 +1,19 @@
-import type { CliDefinition } from './index.d';
+import type { CliDefinition, KeyPair, QuickSends } from './index.d';
 
-export const internalCommands = {
+import { Command } from './command';
+
+export const internalCommands: {
+  getNextJob: '_getNextJob';
+  getNextPrimaryJob: '_getNextJob_primary';
+  enqueueJob: '_enqueueJob';
+  enqueueJobPrimary: '_enqueueJob_primary';
+  newJobNotice: '_newJobNotice';
+  message: 'message';
+} = {
   getNextJob: '_getNextJob',
+  getNextPrimaryJob: '_getNextJob_primary',
   enqueueJob: '_enqueueJob',
+  enqueueJobPrimary: '_enqueueJob_primary',
   newJobNotice: '_newJobNotice',
   message: 'message',
 };
@@ -10,6 +21,8 @@ export const internalCommands = {
 export const defaultCommands: CliDefinition[] = [
   {
     command: 'log',
-    action: console.log,
+    action: async (command: Command, state: KeyPair, sends: QuickSends) => {
+      console.log(command);
+    },
   },
 ];

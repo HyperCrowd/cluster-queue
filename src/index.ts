@@ -1,4 +1,9 @@
-import type { CliDefinition, KeyPair, QuickSends } from './index.d';
+import type {
+  CliDefinition,
+  CommandAction,
+  KeyPair,
+  QuickSends,
+} from './index.d';
 import cluster from 'cluster';
 import { Cli } from './cli';
 import { Primary } from './primary';
@@ -9,11 +14,8 @@ import { Worker } from './worker';
 export class Cluster {
   commands: CliDefinition[];
   useLogging: boolean;
-  onPrimaryCommand: (
-    worker: typeof cluster.worker,
-    command: Command
-  ) => Promise<void>;
-  onWorkerCommand: (command: Command) => Promise<void>;
+  onPrimaryCommand: CommandAction;
+  onWorkerCommand: CommandAction;
 
   constructor(commands: CliDefinition[], useLogging: boolean = false) {
     this.commands = commands;
@@ -30,13 +32,7 @@ export class Cluster {
   /**
    * Cluster node command handlers
    */
-  onCommand(
-    onPrimaryCommand: (
-      worker: typeof cluster.worker,
-      command: Command
-    ) => Promise<void>,
-    onWorkerCommand: (command: Command) => Promise<void>
-  ) {
+  onCommand(onPrimaryCommand: CommandAction, onWorkerCommand: CommandAction) {
     this.onPrimaryCommand = onPrimaryCommand;
     this.onWorkerCommand = onWorkerCommand;
     return this;
@@ -62,7 +58,6 @@ export class Cluster {
       cli.start();
 
       // Wait for the primary queue to be empty
-
       await primary.start();
       await onPrimaryStart(primary);
     } else {
@@ -85,7 +80,7 @@ export class Cluster {
           '<text>': 'The name of the state to set',
         },
         options: {},
-        action: (command: Command, state: KeyPair, sends: QuickSends) => {
+        action: async (command: Command, state: KeyPair, sends: QuickSends) => {
           state.text = command.args.cli.text;
           console.log('setState', state);
         },
@@ -93,10 +88,10 @@ export class Cluster {
     ],
     true
   ).onCommand(
-    async (worker: typeof cluster.worker, command: Command) => {
+    async (command: Command, state: KeyPair, sends: QuickSends) => {
       console.log('PRIMARY COMMAND', command);
     },
-    async (command: Command) => {
+    async (command: Command, state: KeyPair, sends: QuickSends) => {
       console.log('WORKER COMMAND', command);
     }
   );

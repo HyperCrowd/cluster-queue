@@ -79,8 +79,13 @@ export class Cli {
       }
 
       cluster.emit(
-        internalCommands.enqueueJob,
-        new Command(definition.command, options, 'cli', 'primary')
+        'message',
+        new Command(
+          definition.command,
+          options,
+          'cli',
+          internalCommands.enqueueJobPrimary
+        )
       );
     });
   }
