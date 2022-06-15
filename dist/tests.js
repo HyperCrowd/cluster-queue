@@ -71,6 +71,9 @@ var require_package = __commonJS({
   }
 });
 
+// tests/index.ts
+var import_cluster4 = __toESM(require("cluster"));
+
 // src/index.ts
 var import_cluster3 = __toESM(require("cluster"));
 
@@ -534,4 +537,9 @@ var import_uvu = require("uvu");
   }, false, 0);
 });
 import_uvu.test.run();
+
+// tests/index.ts
+if (import_cluster4.default.isWorker) {
+  process.exit(0);
+}
 //# sourceMappingURL=tests.js.map
