@@ -1,6 +1,5 @@
 import { Cluster } from '../src';
 import { test } from 'uvu';
-import * as assert from 'uvu/assert';
 
 test('Test primary', async () => {
   const instance = new Cluster(

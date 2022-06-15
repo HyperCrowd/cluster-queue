@@ -18,7 +18,7 @@
     "build": "tsup-node --legacy-output --dts --minify --format esm,cjs,iife",
     "sb-watch": "nodemon --watch src/ -e ts,tsx,js --exec \"tsup-node --dts --onSuccess 'node -r source-map-support/register dist/index.js setText -f test'\"",
     "watch": "tsup-node --watch --dts --onSuccess 'node -r source-map-support/register dist/index.js'",
-    "test": "nodemon --watch tests/ -e ts,tsx,js --exec \"tsup-node --entry.tests=tests/index.ts --onSuccess 'uvu -r source-map-support/register dist ^tests.js$'\""
+    "test": "nodemon --watch tests/ --watch src/ -e ts,tsx,js --exec \"tsup-node --entry.tests=tests/index.ts --onSuccess 'uvu -r source-map-support/register dist ^tests.js$'\""
   },
   "tsup": {
     "entry": ["src/index.ts"],
