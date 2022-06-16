@@ -2,7 +2,7 @@ import * as path from 'path';
 
 import { WorkerPool } from './threadPool';
 
-export class Thread<DataObject = { I: number }, ResultObject = number> {
+export class Thread<DataObject, ResultObject> {
   fileName: string;
   pool: WorkerPool<DataObject, ResultObject>;
 
@@ -13,29 +13,24 @@ export class Thread<DataObject = { I: number }, ResultObject = number> {
   /**
    *
    */
-  async start(jobs: [], onJob: () => DataObject) {
-    this.pool = new WorkerPool<DataObject, ResultObject>(
-      path.join(__dirname, './worker.js'),
-      8
-    );
+  async run(
+    jobs: [],
+    onJob: () => DataObject,
+    threadCount: onCompletenumber = 8
+  ) {
+    if (this.pool === undefined) {
+      this.pool = new WorkerPool<DataObject, ResultObject>(
+        this.fileName,
+        threadCount
+      );
+    }
 
-    return this.run(jobs, onJob);
-  }
-
-  /**
-   *
-   */
-  async run(jobs: [], onJob: () => DataObject) {
     return Promise.all(
       jobs.map(async (_, i) => {
         await this.pool.run(onJob);
-        console.log('finished', i);
       })
     ).then(() => {
       console.log('finished all');
     });
   }
 }
-
-// https://threads.js.org/usage
-// yarn add threads
