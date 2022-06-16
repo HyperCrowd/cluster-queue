@@ -36,3 +36,6 @@ export class Thread<DataObject = { I: number }, ResultObject = number> {
     });
   }
 }
+
+// https://threads.js.org/usage
+// yarn add threads
