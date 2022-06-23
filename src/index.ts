@@ -64,10 +64,11 @@ export class Cluster {
       // Wait for the primary queue to be empty
       await primary.start(maxCpus);
       await onPrimaryStart(primary);
+      return primary
     } else {
-      await onWorkerStart(
-        new Worker(cluster.worker, this.onWorkerCommand, this.useLogging)
-      );
+      const worker = new Worker(cluster.worker, this.onWorkerCommand, this.useLogging)
+      await onWorkerStart(worker);
+      return worker;
     }
   }
 }
